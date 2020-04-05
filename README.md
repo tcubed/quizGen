@@ -13,7 +13,7 @@ See the Jupyter notebook for a more thorough walk-through, but briefly:
 
 We've added an additional column "GROUP" to the database, which allows us to assign a grouping name for drawing questions.  For example, we can label questions with "150" or "300" if we wish to restrict the generator to certain kinds of questions.  We'll show how to use this below.
 
-<img src="/images/question_grouping.png" alt="question grouping" height="300"/>
+<img src="/images/question_grouping.png" alt="question grouping"/>
 
 ### Create the quiz generator
 
@@ -92,3 +92,11 @@ msg={'intro':'This is a CM&A Bibble Quizzing packet.  The quiz master is encoura
 
 QG.genQuizPacket('A_practice_0323.docx',title='A Practice - 3/23/2020',msg=msg)
 ```
+<img src="/images/quiz_packet.png" alt="question grouping"/>
+
+### Extra questions and repeats
+
+Extra questions of each type are necessary, and these are located in the back of the quiz packet.  In additition, there will be some cases, especially for quiz tiers that only quiz on a limited set of questions (e.g beginning of the year or some junior divisions), that many quizzes could eventually result in repeats being necessary.  These repeat questions are marked as such and highlighted in yellow.
+
+This example shows that repeat questions didn't appear in any of the quizzes, and only started showing up in some of the extra questions for a junior division.
+<img src="/images/extra_repeats.png" alt="question grouping"/>
