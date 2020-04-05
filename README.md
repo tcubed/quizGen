@@ -13,7 +13,7 @@ See the Jupyter notebook for a more thorough walk-through, but briefly:
 
 We've added an additional column "GROUP" to the database, which allows us to assign a grouping name for drawing questions.  For example, we can label questions with "150" or "300" if we wish to restrict the generator to certain kinds of questions.  We'll show how to use this below.
 
-
+<img src="/images/question_grouping.png" alt="question grouping" height="300"/>
 
 ### Create the quiz generator
 
