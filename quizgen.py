@@ -93,18 +93,28 @@ class QuizGenerator():
         #self.quizMakeup={'current':{'frac':0.5,'content':[('HEB',[6,7,8,9,10],[150,300])]},
         #                'past':{'frac':0.5,'content':[('HEB',[1,2,3,4,5],[150,300])]}
         #    }
-
-        if(quizDistribution==None):
+        if(quizType.lower()=='epistle'):
             # epistle
             qdist={'int':{'range':(9,16),'types':('int',),'label':'Interrogative'},
                 'cr':{'range':(3,7),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
                 'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
                 'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
                 'q':{'range':(3,4),'types':('q','q2'),'label':'Quote'}}
-            self.quizDistribution=qdist
+        elif(quizType.lower()=='gospel'):
+            # gospel
+            qdist={'int':{'range':(8,14),'types':('int',),'label':'Interrogative'},
+                'cr':{'range':(3,6),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
+                'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
+                'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
+                'q':{'range':(2,3),'types':('q','q2'),'label':'Quote'},
+                'sit':{'range':(2,4),'types':('sit',),'label':'Situational'},}
+        elif (quizType.lower()=='custom'):
+            qdist=None
         else:
-            self.quizType='custom'
-            self.quizDistribution=quizDistribution
+            raise Exception('quizType is epistle/gospel/custom, not "%s"'%quizType)
+
+        self.quizType=quizType.lower()
+        self.quizDistribution=qdist
 
         self.quizMakeup=None
         self.verbose=False
@@ -113,6 +123,7 @@ class QuizGenerator():
         # optional settings
         #
         self.scramblePeriod=1   # set to zero to have questions by period (as a check)
+        self.rules2013=False
 
         # inits
         self.quizzes=None
@@ -154,16 +165,16 @@ class QuizGenerator():
         Args:
             fnxls (string): filename of Excel file
                 The expected format of the Excel file is:
-                    Book, Chapter, Verse, Verse2, Question, Answer, Group
-                    -- Group is added to the database as a flag for 
+                    Book, Chapter, Verse, Verse2, Question, Answer, Club
+                    -- Club is added to the database as a flag for 
                     whether it is part of the 150 or 300 key verses.
-                    Other group labels are possible.
+                    Other club labels are possible.
                     -- This parses the Excel file looking for bolded key 
                     words.  These are extracted internally.
 
         This function creates a Pandas DataFrame with the following 
         column headings:
-            ['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','GROUP',
+            ['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','CLUB',
               'QKEYWORDS','AKEYWORDS','FLAGS','BCV']
         Most of these are straightforward from the Excel file except the 
         following:
@@ -234,9 +245,12 @@ class QuizGenerator():
 
                     boldlist=[]
                     for segment in segments:
-                        #print('   "%s"'%segment['text'],'italic:',segment['font'].italic,'bold:', segment['font'].bold)
+                        #if('path' in segment['text']):
+                        #    print('   "%s"'%segment['text'],'italic:',segment['font'].italic,'bold:', segment['font'].bold)
                         if(segment['font'].bold):
-                            boldlist.append(segment['text'])
+                            #boldlist.append(segment['text'])
+                            st=segment['text'].replace('.','')
+                            boldlist.extend(st.split())
                     keywords=','.join(boldlist)
                 else:
                     #print('(cell single style)',
@@ -258,7 +272,11 @@ class QuizGenerator():
         
         # make dataframe
         df=pd.DataFrame(L)
-        df=df[['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','GROUP','QKEYWORDS','AKEYWORDS','FLAGS','BCV']]
+        # 2019 HEBREWS,1P,2P
+        #df=df[['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','GROUP','QKEYWORDS','AKEYWORDS','FLAGS','BCV']]
+        #df = df.astype({'CH': int, 'VS': int})
+        # 2020 MATTHEW
+        df=df[['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','CLUB','SET','QKEYWORDS','AKEYWORDS','FLAGS','BCV']]
         df = df.astype({'CH': int, 'VS': int})
 
         self.database=df
@@ -266,7 +284,7 @@ class QuizGenerator():
     def getContent(self):
         """Get all the content for the quiz in specified range of 
         books & verses.  If a particular question type (e.g. FT) 
-        has a limit assigned (e.g. 150), then the GROUP is used 
+        has a limit assigned (e.g. 150), then the CLUB is used 
         to restrict those questions.
         """
         df=self.database
@@ -279,13 +297,24 @@ class QuizGenerator():
                 df1=df[(df['BK']==bk) & df['CH'].isin(ch)]
 
                 #if(len(grp)):
-                #    df1=df1[df1['GROUP'].isin(grp)]
+                #    df1=df1[df1['CLUB'].isin(grp)]
                 F=[]
                 for k,dv in self.quizDistribution.items():
-                    f=df1[df1['TYPE'].str.lower().isin(dv['types'])]
+                    # situational
+                    if(k=='sit'):
+                        #print(dir(df1['TYPE'].str.lower().str))
+
+                        f=df1[df1['TYPE'].str.lower().str.startswith(k)]
+                    else:
+                        # all other kinds of questions
+                        f=df1[df1['TYPE'].str.lower().isin(dv['types'])]
+                    
                     nrows1=f.shape[0]
                     if('limit' in dv):
-                        f=f[f['GROUP'].isin(dv['limit'])]
+                        #f=f[f['GROUP'].isin(dv['limit'])]
+                        f=f[f['CLUB'].isin(dv['limit'])]
+                    if('set' in dv):
+                        f=f[f['SET'].isin(dv['set'])]
                     nrows2=f.shape[0]
                     if(nrows2==0):
                         raise Exception('ack!  %d/%d %s questions in content'%(nrows2,nrows1,k))
@@ -332,13 +361,17 @@ class QuizGenerator():
                     tcount[qt]+=questionCounts[qt]
                 # if the count is less than the minimum, then the minmet flag is False
                 if(tcount[qt]<qdata['range'][0]): minmet=False
-
+            #print('***: pick question ***')
+            #print(tcount)
+            #print('minmet: %r'%minmet)
+            #print(tcount)
             #if(minmet):
             #    print('minimum is met!')
             #else: print('min is NOT met')
             # calc prob of picking each type
             keys=list(self.quizDistribution.keys())
             n=[]
+            typeRemaining={}
             for qt in keys:
                 qdata=self.quizDistribution[qt]
                 if(minmet):
@@ -349,9 +382,12 @@ class QuizGenerator():
                     # yet to be filled to satisfy the minimum
                     v=qdata['range'][0]-tcount[qt]
                 n.append(v)
-
+                typeRemaining[qt]=v
                 #print('%s: questions left: %d'%(qt,v))
+            #print(n)
+            #print(typeRemaining)
             weight=[x/sum(n) for x in n]
+            #print(weight)
 
             # get the question type
             qtpick=np.random.choice(keys,p=weight)
@@ -364,7 +400,10 @@ class QuizGenerator():
         # get all the questions of this type
         #
         qdata=self.quizDistribution[qtpick]
-        df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types'])) & (dfremaining['used']==0)]
+        if(qtpick=='sit'):
+            df=dfremaining[(dfremaining['TYPE'].str.lower().str.startswith(qtpick)) & (dfremaining['used']==0)]
+        else:
+            df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types'])) & (dfremaining['used']==0)]
         #print('df orig rows: %d'%df.shape[0])
 
         # if there is a question in the quiz, exclude book-chapter-verses that are already in the quiz
@@ -383,13 +422,44 @@ class QuizGenerator():
             #print('%s repeat!'%qtpick)
             repeat=True
             # pick among all remaining questions of this type
-            df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types']))]
+            if(qtpick=='sit'):
+                df=dfremaining[(dfremaining['TYPE'].str.lower().str.startswith(qtpick))]
+            else:
+                df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types']))]
             #print('df rows, w/repeats: %d'%df.shape[0])
         
 
         # grab one question
         #print('df rows: %d'%df.shape[0])
-        q=df.sample(n=1)
+        if(self.rules2013==True):
+            # while this works out some of the problems, it does not guard or enforce the distribution.
+            # e.g. picking some CRMAs will double-count -- too many will preclude the overall distribution
+            # from being met
+            raise Exception('not supported yet')
+            
+            drawmax=20;drawiter=0
+            while(1):
+                q=df.sample(n=1)
+                row=q.iloc[0]
+                print('row type: %s'%row.TYPE)
+                if(row.TYPE in ['CRMA','CVRMA']):
+                    if((typeRemaining['cr']>0) and (typeRemaining['ma']>0)):
+                        # if we have at least one remaining for cr and ma, then we can accept this
+                        break
+                    else:
+                        # draw again
+                        print('draw again!')
+                        pass
+                else:
+                    # if not a CRMA/CVMA -- we should be good.
+                    break
+                drawiter+=1
+                if(drawiter>drawmax):
+                    raise Exception('too many drays for CRMA/CVRMA.  can''t make it work')
+        else:
+            q=df.sample(n=1)
+
+
         q['used']=1
         if(repeat): q['FLAGS']+='R'
         #display(q)
@@ -410,7 +480,10 @@ class QuizGenerator():
         for qt,qdata in self.quizDistribution.items():
             # dataframe of this type of question
             if(df.shape[0]>0):
-                dftype=df[df['TYPE'].str.lower().isin(qdata['types'])]
+                if(qt=='sit'):
+                    dftype=df[df['TYPE'].str.lower().str.startswith(qt)]
+                else:
+                    dftype=df[df['TYPE'].str.lower().isin(qdata['types'])]
                 nrow=dftype.shape[0]
             else:
                 nrow=0
@@ -481,6 +554,7 @@ class QuizGenerator():
             nq=int(nq2*self.quizMakeup[period]['frac']+1)
             if(self.verbose): print('picking second %d questions from %s'%(nq,period))
             for qi in range(nq):
+                #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
                 Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
                 if(Q2.shape[0]>=nq2): break
 
@@ -660,7 +734,10 @@ class QuizGenerator():
             
             # sort according to starting position
             IL=sorted(IL,key=lambda x:x[1])
+            #print(keywords)
             #print('IL: %s'%str(IL))
+            #if('paths' in keywords):
+            #    print('IL: %s'%str(IL))
 
             # start
             txt='%s'%text[:IL[0][1]]
@@ -699,7 +776,10 @@ class QuizGenerator():
         # document, paragraph, section, font settings
         #
         # -- width for columns: question number, type, Q/A, reference
-        width=[Inches(0.375),Inches(0.375),Inches(5.25),Inches(1.)]
+        if(self.quizType=='epistle'):
+            width=[Inches(0.375),Inches(0.375),Inches(5.25),Inches(1.)]
+        else:
+            width=[Inches(0.375),Inches(1),Inches(4.625),Inches(1.)]
 
         document = Document()
         sections = document.sections
@@ -725,26 +805,44 @@ class QuizGenerator():
         #
         # add the message
         #
+        # if(msg==None):
+        #     if(self.quizType!='custom'):
+        #         msg={'intro':'This is a quiz packet for WGLD.  The quiz packet should have these characteristics:',
+        #             'list':['Unique questions for each quiz (if possible) in the packet',
+        #                     'Satisfaction of question minimums and maximums for each type',
+        #                     '"A" division quizzes have 50% current and 50% past periods.',
+        #                     '"B" division quizzes are only current content, and will therefore have repeats.'+\
+        #                     '  We have tried to keep these in the alternative questions 16A, 16B, etc.  Replace as necessary.']}
+        #     else:
+        #         msg={'intro':'This is a custom quiz.'}
+        
+        # p = document.add_paragraph(msg['intro'])
+
+        # #document.add_paragraph('Unique questions for each quiz (if possible) in the packet', style='List Bullet')
+        # #document.add_paragraph(
+        # #    'Satisfaction of question minimums and maximums for each type', style='List Bullet'
+        # #)
+        # if('list' in msg):
+        #     for m in msg['list']:
+        #         document.add_paragraph(m, style='List Bullet')
+
+        # default message
         if(msg==None):
-            if(self.quizType!='custom'):
-                msg={'intro':'This is a quiz packet for WGLD.  The quiz packet should have these characteristics:',
-                    'list':['Unique questions for each quiz (if possible) in the packet',
+            msg=[{'type':'p','text':'This is a quiz packet for WGLD.  The quiz packet should have these characteristics:'},
+                 {'type':'list','text':['Unique questions for each quiz (if possible) in the packet',
                             'Satisfaction of question minimums and maximums for each type',
                             '"A" division quizzes have 50% current and 50% past periods.',
                             '"B" division quizzes are only current content, and will therefore have repeats.'+\
-                            '  We have tried to keep these in the alternative questions 16A, 16B, etc.  Replace as necessary.']}
-            else:
-                msg={'intro':'This is a custom quiz.'}
-        
-        p = document.add_paragraph(msg['intro'])
+                            '  We have tried to keep these in the alternative questions 16A, 16B, etc.  Replace as necessary.']}]
 
-        #document.add_paragraph('Unique questions for each quiz (if possible) in the packet', style='List Bullet')
-        #document.add_paragraph(
-        #    'Satisfaction of question minimums and maximums for each type', style='List Bullet'
-        #)
-        if('list' in msg):
-            for m in msg['list']:
-                document.add_paragraph(m, style='List Bullet')
+        for ii,m in enumerate(msg):
+            if(m['type']=='p'):
+                # normal paragraph
+                p = document.add_paragraph(m['text'])
+            elif(m['type']=='list'):
+                # bulleted list
+                for mitem in m['text']:
+                    document.add_paragraph(mitem, style='List Bullet')
 
         #
         # loop through quizzes
@@ -796,12 +894,19 @@ class QuizGenerator():
                 a='A: %s'%row.ANSWER
                 keywords=row.AKEYWORDS.split(',')
                 self.boldText(cell=c, text=a, keywords=keywords)
-                # book, chapter, verse, and group (e.g. 150,300)
+
+                # book, chapter, verse, and club (e.g. 150,300)
                 txt='%s %s:%s'%(row.BK,row.CH,row.VS)
                 if(isinstance(row.VE,float)):
                     txt+='-%s'%str(int(row.VE))
-                if(isinstance(row.GROUP,float)):
-                    txt+='\n(%d)'%row.GROUP
+                
+                txt+='\n('
+                if(isinstance(row.CLUB,float)):
+                    #txt+='\n(%d)'%row.CLUB
+                    txt+='%d,'%row.CLUB
+                if(row.SET is not None):
+                    txt+='%s'%row.SET
+                txt+=')'
                 
                 # additional flags (repeats)
                 c=row_cells[3]
@@ -911,8 +1016,8 @@ class QuizGenerator():
                     txt='%s %s:%s'%(row.BK,row.CH,row.VS)
                     if(isinstance(row.VE,float)):
                         txt+='-%s'%str(int(row.VE))
-                    if(isinstance(row.GROUP,float)):
-                        txt+='\n(%d)'%row.GROUP
+                    if(isinstance(row.CLUB,float)):
+                        txt+='\n(%d)'%row.CLUB
 
                     #if(not np.isnan(row.VE)):
                     #    txt+='-%s'%row.VE
