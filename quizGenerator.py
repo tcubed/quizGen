@@ -82,6 +82,23 @@ from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 from docx.enum.text import WD_LINE_SPACING
 
+import logging
+#logging.basicConfig(filename='quiz_generator.log',level=logging.DEBUG)
+# create logger
+logger = logging.getLogger('quiz_generator')
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(message)s')
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+# file handler
+fh = logging.FileHandler('quiz_generator.log')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
+
 def countTypes(df,quizDistribution):
     """get counts of different question types
     """
@@ -752,6 +769,9 @@ class QuizGenerator():
         if(self.quizContent is None):
             self._getContent()
         
+        logger.debug('nquiz: %d'%self.nquiz)
+        logger.debug('quizMakeup: %s'%str(self.quizMakeup))
+
         # get copy of content from each period
         #    typically, C={'past':dataFrame,'current':dataFrame}
         C={}
