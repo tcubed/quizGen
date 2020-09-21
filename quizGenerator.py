@@ -943,6 +943,10 @@ class QuizWriter():
         # loop through quizzes
         #
         for qi,QZ in enumerate(quizData['quizzes']):
+
+            chapList=sorted(QZ['CH'].unique())
+            logger.debug('chapters: %s'%str(chapList))
+            
             if(qi>0):
                 document.add_page_break()
             document.add_heading('Quiz %d'%(qi+1), 1)
