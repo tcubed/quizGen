@@ -387,7 +387,7 @@ class QuizGenerator():
                     nrows2=f.shape[0]
                     if(nrows2==0):
                         #raise Exception('Ack!  %d/%d %s questions in %s content.'%(nrows2,nrows1,k,period))
-                        print ('Warning: %d %s questions in %s content.  %d pass limits.'%(nrows2,nrows1,k,period))
+                        print ('Warning: %d %s questions in %s content.  %d pass limits.'%(nrows2,k,period,nrows1))
                     
                     F.append(f)
                 df1=pd.concat(F)
