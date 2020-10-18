@@ -1,0 +1,240 @@
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!--
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+        -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+        <title>Quiz Generation</title>
+    </head>
+    <body>
+
+
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+          <a class="navbar-brand" href="#">Quiz Generation <span style="color:red;font-weight:bold">(BETA)</span></a>
+          <!--
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+
+            <div class="navbar-nav">
+              <a class="nav-item nav-link active" href="#">Home <span class="sr-only">(current)</span></a>
+              <a class="nav-item nav-link" href="#">Features</a>
+              <a class="nav-item nav-link" href="#">Pricing</a>
+              <a class="nav-item nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+            </div>
+            -->
+          </div>
+        </nav>
+
+
+
+
+
+
+
+        <div class="container" style="margin-top:20px">
+            <!--
+            <h2>Generate Quiz</h2>
+            -->
+            <form action="quizgen" method="POST">
+            <div class="row">
+
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="pastChapters">Past Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters" name="pastChapters" aria-describedby="verseHelp" placeholder="1,2,3" value="1,2,3">
+                      <small id="pastChapterHelp" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="pastFraction">Fraction (past content)</label>
+                      <input type="number" min="0" max="1" class="form-control" id="pastFraction" name="pastFraction" value="0.5" readonly=true>
+                      <!--<small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="currentChapters">Current Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters" name="currentChapters" aria-describedby="verseHelp" value="4,5">
+                      <small id="pastChapterHelp" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="currentFraction">Fraction (current content)</label>
+                      <input type="text" class="form-control" id="currentFraction" name="currentFraction" value="0.5" readonly=true>
+                      <!--<small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="nquiz">Number of Quizzes</label>
+                      <input type="text" pattern="[0-9]" class="form-control" id="nquiz" name="nquiz" aria-describedby="nquiz" value="1">
+                      <!--<small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="nextra">Extra Questions Per Category</label>
+                      <input type="text" pattern="[0-9]+" class="form-control" id="nextra" name="nextra" aria-describedby="nextra" value="10">
+                      <!--<small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="division">Divison</label>
+                      <!--
+                      <input type="text" class="form-control" id="division" name="division" aria-describedby="division" value="A">
+                      <small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
+
+                      <select class="form-control" aria-describedby="division" name="division" id="division">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="X">eXtreme</option>
+                      </select>
+                      <small id="divisionHelp" class="form-text text-muted">A (150&300), B (150), eXtreme (full content)</small>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="outfile">Quiz Packet Name</label>
+                      <input type="text" pattern="[a-zA-Z0-9_,]+" class="form-control" id="outfile" name="outfile" aria-describedby="outfile" value="myquizzes">
+                      <small id="outfileHelp" class="form-text text-muted">letters, numbers, underscores, commas (no spaces, periods, specials)</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="format">Quiz Packet Name</label>
+                      <select class="form-control" aria-describedby="format" name="format" id="format">
+                        <option value="pdf">pdf</option>
+                        <option value="docx">docx (Word doc)</option>
+                      </select>
+                      <small id="fmtHelp" class="form-text text-muted">pdf: easy, but ugly.  docx: looks good, print/export in Word/LibreOffice.</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                <button type="submit" class="btn btn-primary">Generate Quiz</button>
+                </div>
+            </div>
+            </form>
+
+            {% for comment in comments %}
+            <div class="row">
+                {{ comment }}
+            </div>
+            {% endfor %}
+
+
+
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Status messages</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for msg in messages %}
+                            <div class="row">
+                                {{ msg }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Troubleshooting & Errors</h5>
+                        </div>
+                        <div class="card-body">
+                            <small>
+
+                                <h6>I got error "X", what should I do?</h6>
+                                <p>Sorry, if you <a href="mailto:t3random@gmail.com">contact me</a>, I'll try to address it.  Here is a short-list of known problems
+                                work-arounds, if any:</p>
+                                <dl>
+                                    <dt>"Cannot seem to generate enough 1-20 questions to meet distribution"</dt>
+                                    <dd>This can happen, especially, when there is only 1 chapter in one of the periods.  For instance, if your "past" period is
+                                    chapters 1-6, and the "current" is chapter 7.  There might not be enough questions drawn to fill the minimums.  Often, if
+                                    you rerun the tool several times, one of them will eventually work.  In these cases, you should also generate quizzes one at a time
+                                    to increase the likelihood of generating successful quizzes.  By the times chapter ranges enlarge, this problem should go away.
+                                    </dd>
+                                </dl>
+
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>The fine print and FAQ...</h5>
+                        </div>
+                        <div class="card-body">
+                            <small>
+                                <h6><span style="color:red;font-weight:bold">This is in beta.  Carefully review your results before you need them!</span></h6>
+
+                                <h6>What about the rules & distributions these were generated from?</h6>
+                                <ul>
+                                    <li>This is based on the 2018 CMA rules.</li>
+                                    <li>Questions are from the CQLT "local" subset of questions.</li>
+                                    <li>A and B division questions for quote-type and
+                                    finish-the-verse type questions are limited to club
+                                    150+300 and 150 respectively.  The "eXtreme" division
+                                    is without these limits.</li>
+                                </ul>
+
+                                <h6>The quiz document formatting doesn't look very nice...</h6>
+                                <p>Unfortunately, there is no control of the PDF format -- sorry!  However, the Word docx
+                                    format retains the intended formatting,
+                                    so it may look nicer to open in Word or LibreOffice and
+                                    save/print or export as PDF.</p>
+
+                            </small>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+
+
+
+
+    </body>
+
+
+</html>
