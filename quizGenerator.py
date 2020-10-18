@@ -87,7 +87,7 @@ import logging
 # create logger
 logger = logging.getLogger('quiz_generator')
 logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(message)s')
+formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s')
 logger.handlers=[]
 # create console handler and set level to debug
 ch = logging.StreamHandler()
@@ -388,7 +388,11 @@ class QuizGenerator():
                     nrows2=f.shape[0]
                     if(nrows2==0):
                         #raise Exception('Ack!  %d/%d %s questions in %s content.'%(nrows2,nrows1,k,period))
-                        print ('Warning: %d %s questions in %s content.  %d pass limits.'%(nrows2,k,period,nrows1))
+                        msg='Warning: "%s" has %d %s question(s); %d pass limits.  ' \
+                            'This may result in having to regenerate quizzes.'%(period,nrows1,k,nrows2)
+                        logger.warning(msg)
+                        #print(msg)
+                        
                     
                     F.append(f)
                 df1=pd.concat(F)
@@ -466,10 +470,15 @@ class QuizGenerator():
             # get the question type
             qtpick=np.random.choice(keys,p=weight)
             #print('picked %s'%qtpick)
+            
+            msg='typeRemaining: %s'%str(typeRemaining)
+            logger.debug(msg)
         else:
             nq=0
             qtpick=qtype
-
+        
+        logger.debug('Picked %s'%qtpick)
+        
         #
         # get all the questions of this type
         #
@@ -532,13 +541,14 @@ class QuizGenerator():
                     raise Exception('too many draws for CRMA/CVRMA.  can''t make it work')
         else:
             if(len(df)==0):
-                msg='No questions survived this pick.'
+                msg='No %s questions survived this pick.'%qtpick
                 logger.debug(msg)
                 print(msg)
                 return dfquiz,dfremaining
             q=df.sample(n=1)
 
-
+        
+        
         q['used']=1
         if(repeat): q['FLAGS']+='R'
         #display(q)
@@ -605,11 +615,14 @@ class QuizGenerator():
             while((len(Q1)-initNum)<nq):
                 iter+=1
                 if(iter>(2*nq)):
-                    raise Exception('Cannot seem to generate enough pre-16 questions.')
+                    msg='Cannot seem to generate enough 1-20 questions to meet distribution.  ' \
+                        'This may be because too few chapters in one of the periods.  Consider ' \
+                        'rerunning to get a different set or changing chapter ranges.'
+                    raise Exception(msg)
                 #print('...%d'%qi)
                 #print('pick question from %s'%period)
                 Q1,dfremaining=self.pickQuestion(Q1,dfremaining)
-                logger.debug('Q1: %d questions (iter: %d)'%(len(Q1),iter))
+                logger.debug('Questions 1-20: %d questions (iter: %d)'%(len(Q1),iter))
                 #display('count: %d'%dfremaining['used'].value_counts().iloc[1])
 
             # add the period counts
@@ -632,25 +645,33 @@ class QuizGenerator():
         lbl=[str(x+1) for x in range(nq1)]
         Q1['qn']=lbl
 
+
+        usedVerses=Q1['BCV'].unique().tolist()
+        #q1counts=self._countTypes(Q1)
+        q1counts=countTypes(Q1,self.quizDistribution)
+        #pprint.pprint(q1counts)
+        logger.debug('Question 1-20 counts: %s'%str(q1counts))
+        
+
         #
         # pick for rest of quiz (16AB, 17AB, 18AB, 19AB, 20AB) -- these go in dataframe, Q2
         #
         if(self.quizType!='custom'):
             nq2=10
         else:
+            # a "normal" CMA quiz will have 30 questions (16+AB, through 20+AB)
             nq2=nquestion-20
-        usedVerses=Q1['BCV'].unique().tolist()
-        #q1counts=self._countTypes(Q1)
-        q1counts=countTypes(Q1,self.quizDistribution)
-        #pprint.pprint(q1counts)
+        
 
         for period,dfremaining in C.items():
+            # number of questions for this period
             nq=int(nq2*self.quizMakeup[period]['frac']+1)
             if(self.verbose): 
-                msg='picking second %d questions from %s'%(nq,period)
+                msg='Picking %d A,B questions (16AB-20AB) from "%s"'%(nq,period)
                 logger.info(msg)
+            
             #for qi in range(nq):
-            initNum=len(Q2)
+            initNum=len(Q2) # number of questions we start this round with
             iter=0
             while((len(Q2)-initNum)<nq):
                 iter+=1
@@ -658,7 +679,7 @@ class QuizGenerator():
                     raise Exception('Cannot seem to generate enough 16+ questions.')
                 #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
                 Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
-                logger.debug('Q2: %d questions (iter: %d)'%(len(Q2),iter))
+                logger.debug('Questions 16AB-20AB: %d questions (iter: %d)'%(len(Q2),iter))
                 if(Q2.shape[0]>=nq2): break
 
             periodCounts[period].append(nq)
@@ -690,6 +711,7 @@ class QuizGenerator():
         #
         # pick a few overtime questions
         #
+        logger.debug('pick overtime questions')
         if(self.quizType!='custom'):
             nq3=3
         else:
@@ -710,7 +732,10 @@ class QuizGenerator():
             nq=int(nq3*self.quizMakeup[period]['frac']+1)
             if(self.quizType=='custom'): nq=0
 
-            if(self.verbose): print('picking third %d questions from %s'%(nq,period))
+            if(self.verbose):
+                msg='picking %d overtime questions from "%s"'%(nq,period)
+                logger.debug(msg)
+                #print('picking third %d questions from %s'%(nq,period))
             for qi in range(nq):
                 #print(list(self.quizDistribution.keys()))
                 #
@@ -720,6 +745,7 @@ class QuizGenerator():
                 #print(qt)
                 #print(qt[0])
                 Q3,dfremaining=self.pickQuestion(Q3,dfremaining,BCV=usedVerses,qtype=qt)
+                logger.debug('Overtime: %d questions'%(len(Q3)))
                 if(Q3.shape[0]>=nq3): break
 
         # scramble third part
@@ -773,6 +799,7 @@ class QuizGenerator():
     def genExtraQuestions(self,C,qtype,xtra):
         """pick extra questions
         """
+        #logger.debug('picking extra questions')
         Q1=pd.DataFrame()
         for period,dfremaining in C.items():
             nq=int(xtra*self.quizMakeup[period]['frac'])
@@ -812,12 +839,15 @@ class QuizGenerator():
         # loop through requested quizzes
         QQ=[];QQstats=[]
         for qi in range(self.nquiz):
+            logger.info('GENERATE QUIZ %d'%(qi+1))
             dfq,C,stats=self.genQuiz(C,nquestion=nquestion)
             QQ.append(dfq)
             QQstats.append(stats)
-
+        
+        
         qxtra={}
         for qt,qdata in self.quizDistribution.items():
+            logger.debug('Pick extra %s questions'%qt)
             Q1,C=self.genExtraQuestions(C,qt,xtra)
             qxtra[qt]=Q1
 
