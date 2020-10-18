@@ -4,24 +4,32 @@ import quizGenerator
 import importlib
 import numpy as np
 np.random.seed(1)
+np.random.seed(10102020)
 importlib.reload(quizGenerator)
 
 QDAT={'AAC':{'date':'2020xxxx','datestr':'x/x/2020',
              'prefix':r'quizzes/2020/AAC/AAC',
-             'A':{'past':[1,2],'current':[3,4]},
-             'B':{'past':[1,2],'current':[3,4]}},
+             'A':{'past':[1,2,3],'current':[4,5,6]},
+             'B':{'past':[1,2,3],'current':[4,5,6]}},
       
-      'Marshfield':{'date':'2020xxxx','datestr':'x/x/2020',
+      'Marshfield':{'date':'20201018','datestr':'10/18/2020',
              'prefix':r'quizzes/2020/Marshfield/Marshfield',
-             'A':{'past':[1,2],'current':[3,4]},
-             'B':{'past':[1,2],'current':[3,4]}},
+             'A':{'past':[1,2,3,4,5,6],'current':[7]},
+             'B':{'past':[7],'current':[7]}},
       
       'NCD':{'date':'2020xxxx','datestr':'x/x/2020',
              'prefix':r'quizzes/2020/NCD/NCD',
              'A':{'past':[1,2],'current':[3,4]},
-             'B':{'past':[1,2],'current':[3,4]}}}
+             'B':{'past':[1,2],'current':[3,4]}},
+      
+      'WGL':{'date':'20201010','datestr':'10/10/2020',
+             'prefix':r'quizzes/2020/WGL/WGL',
+             'A':{'past':[1,2,3],'current':[4,5,6]},
+             'B':{'past':[1,2,3],'current':[4,5,6]}}
+      }
 
 fnxls=r'2020_Matthew/MatthewDistrict_2020.xls'
+fnxls=r'2020_Matthew/MatthewDistrict_20201004.xls'
 #pnaac=r'quizzes/2020/AAC/AAC'
 #pnmarsh=r'quizzes/2020/Marshfield/EA'
 #pnncd=r'quizzes/2020/NCD/NCD'
@@ -42,7 +50,59 @@ msg=[{'type':'p',
       'text':['Singular keywords (e.g. ruler) may be partially bolded in plural contexts (e.g. rulers).']},
     {'type':'p',
       'text':'Please let Ted Tower know of any problems you discover.'},]
+    
+# %% WGL A meet quizzes
+np.random.seed(101020201)
+district='WGL'
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
 
+# partial content
+past=QDAT[district]['A']['past']
+current=QDAT[district]['A']['current']
+QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
+            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+            }
+
+# add custom limits for certain question types
+QG.quizDistribution['q']['limit']=(150,300)
+QG.quizDistribution['ft']['limit']=(150,300)
+for k in ['q','ft','int','cr','ma']:
+    QG.quizDistribution[k]['set']=('Local','District')
+    
+qdat=QG.generateQuizTables(nquiz=6,xtra=20)   
+
+# write quizzes
+QW=quizGenerator.QuizWriter()
+fn='%s_A_meet_%s.docx'%(QDAT[district]['prefix'],QDAT[district]['date'])
+ttl='%s A Meet Quizzes - %s'%(district,QDAT[district]['datestr'])
+QW.save(fn,qdat,title=ttl,msg=msg)
+    
+# %% WGL B meet quizzes
+np.random.seed(101020202)
+district='WGL'
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+
+# partial content
+past=QDAT[district]['B']['past']
+current=QDAT[district]['B']['current']
+QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
+            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+            }
+
+# add custom limits for certain question types
+QG.quizDistribution['q']['limit']=(150,)
+QG.quizDistribution['ft']['limit']=(150,)
+for k in ['q','ft','int','cr','ma']:
+    QG.quizDistribution[k]['set']=('Local','District')
+    
+qdat=QG.generateQuizTables(nquiz=6,xtra=20)   
+
+# write quizzes
+QW=quizGenerator.QuizWriter()
+fn='%s_B_meet_%s.docx'%(QDAT[district]['prefix'],QDAT[district]['date'])
+ttl='%s B Meet Quizzes - %s'%(district,QDAT[district]['datestr'])
+QW.save(fn,qdat,title=ttl,msg=msg)
+    
 # %% AAC A practice quizzes
 QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
 

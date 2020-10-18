@@ -366,16 +366,19 @@ class QuizGenerator():
                 #    df1=df1[df1['CLUB'].isin(grp)]
                 F=[]
                 for k,dv in self.quizDistribution.items():
-                    # situational
+                    #
+                    # get type of question
+                    #
                     if(k=='sit'):
+                        # situational
                         #print(dir(df1['TYPE'].str.lower().str))
-
                         f=df1[df1['TYPE'].str.lower().str.startswith(k)]
                     else:
                         # all other kinds of questions
                         f=df1[df1['TYPE'].str.lower().isin(dv['types'])]
-                    
                     nrows1=f.shape[0]
+                    
+                    # limit or set
                     if('limit' in dv):
                         #f=f[f['GROUP'].isin(dv['limit'])]
                         f=f[f['CLUB'].isin(dv['limit'])]
@@ -383,7 +386,9 @@ class QuizGenerator():
                         f=f[f['SET'].isin(dv['set'])]
                     nrows2=f.shape[0]
                     if(nrows2==0):
-                        raise Exception('ack!  %d/%d %s questions in content'%(nrows2,nrows1,k))
+                        #raise Exception('Ack!  %d/%d %s questions in %s content.'%(nrows2,nrows1,k,period))
+                        print ('Warning: %d %s questions in %s content.  %d pass limits.'%(nrows2,nrows1,k,period))
+                    
                     F.append(f)
                 df1=pd.concat(F)
                 
@@ -1048,7 +1053,7 @@ class QuizWriter():
                 # custom quiz
                 msg='Custom quiz distribution; '
                 #for qt,cnt in self._countTypes(QZ).items():
-                for qt,cnt in countTypes(QZ,self.quizDistribution).items():
+                for qt,cnt in countTypes(QZ,qdist).items():
                     msg+=' %s(%d),'%(qt,cnt)
                 msg=msg[:-1]
                 print(msg)
