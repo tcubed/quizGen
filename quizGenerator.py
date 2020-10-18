@@ -528,8 +528,11 @@ class QuizGenerator():
                     break
                 drawiter+=1
                 if(drawiter>drawmax):
-                    raise Exception('too many drays for CRMA/CVRMA.  can''t make it work')
+                    raise Exception('too many draws for CRMA/CVRMA.  can''t make it work')
         else:
+            if(len(df)==0):
+                print('No questions survived this pick.')
+                return dfquiz,dfremaining
             q=df.sample(n=1)
 
 
@@ -590,7 +593,12 @@ class QuizGenerator():
             # pick some questions from this period
             nq=int(20*self.quizMakeup[period]['frac'])
             if(self.verbose): print('picking first %d questions from %s'%(nq,period))
-            for qi in range(nq):
+            #for qi in range(nq):
+            iter=0
+            while(len(Q1)<nq):
+                iter+=1
+                if(iter>(2*nq)):
+                    raise Exception('Cannot seem to generate enough pre-16 questions.')
                 #print('...%d'%qi)
                 #print('pick question from %s'%period)
                 Q1,dfremaining=self.pickQuestion(Q1,dfremaining)
@@ -631,7 +639,12 @@ class QuizGenerator():
         for period,dfremaining in C.items():
             nq=int(nq2*self.quizMakeup[period]['frac']+1)
             if(self.verbose): print('picking second %d questions from %s'%(nq,period))
-            for qi in range(nq):
+            #for qi in range(nq):
+            iter=0
+            while(len(Q2)<nq2):
+                iter+=1
+                if(iter>(nq2*2)):
+                    raise Exception('Cannot seem to generate enough 16+ questions.')
                 #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
                 Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
                 if(Q2.shape[0]>=nq2): break
