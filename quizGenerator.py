@@ -88,6 +88,7 @@ import logging
 logger = logging.getLogger('quiz_generator')
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(message)s')
+logger.handlers=[]
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
@@ -531,7 +532,9 @@ class QuizGenerator():
                     raise Exception('too many draws for CRMA/CVRMA.  can''t make it work')
         else:
             if(len(df)==0):
-                print('No questions survived this pick.')
+                msg='No questions survived this pick.'
+                logger.debug(msg)
+                print(msg)
                 return dfquiz,dfremaining
             q=df.sample(n=1)
 
@@ -589,19 +592,24 @@ class QuizGenerator():
         #    for example
         #        for an "A" quiz, the 50% of the questions are picked from the "past" period,
         #                         then 50% of the questions from the "current" period
-        for period,dfremaining in C.items():
+        
+        for ii,(period,dfremaining) in enumerate(C.items()):
             # pick some questions from this period
             nq=int(20*self.quizMakeup[period]['frac'])
-            if(self.verbose): print('picking first %d questions from %s'%(nq,period))
+            if(self.verbose):
+                msg='picking first %d questions from %s'%(nq,period)
+                logger.info(msg)
             #for qi in range(nq):
+            initNum=len(Q1)
             iter=0
-            while(len(Q1)<nq):
+            while((len(Q1)-initNum)<nq):
                 iter+=1
                 if(iter>(2*nq)):
                     raise Exception('Cannot seem to generate enough pre-16 questions.')
                 #print('...%d'%qi)
                 #print('pick question from %s'%period)
                 Q1,dfremaining=self.pickQuestion(Q1,dfremaining)
+                logger.debug('Q1: %d questions (iter: %d)'%(len(Q1),iter))
                 #display('count: %d'%dfremaining['used'].value_counts().iloc[1])
 
             # add the period counts
@@ -638,15 +646,19 @@ class QuizGenerator():
 
         for period,dfremaining in C.items():
             nq=int(nq2*self.quizMakeup[period]['frac']+1)
-            if(self.verbose): print('picking second %d questions from %s'%(nq,period))
+            if(self.verbose): 
+                msg='picking second %d questions from %s'%(nq,period)
+                logger.info(msg)
             #for qi in range(nq):
+            initNum=len(Q2)
             iter=0
-            while(len(Q2)<nq2):
+            while((len(Q2)-initNum)<nq):
                 iter+=1
-                if(iter>(nq2*2)):
+                if(iter>(nq*2)):
                     raise Exception('Cannot seem to generate enough 16+ questions.')
                 #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
                 Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
+                logger.debug('Q2: %d questions (iter: %d)'%(len(Q2),iter))
                 if(Q2.shape[0]>=nq2): break
 
             periodCounts[period].append(nq)
