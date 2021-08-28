@@ -5,6 +5,7 @@
 *.pdf
 *.log
 *ipynb_checkpoints
+*.pyc
 
 # directories to ignore
 _old/
