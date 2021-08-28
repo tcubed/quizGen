@@ -48,29 +48,29 @@
             -->
             <form action="quizgen" method="POST">
             <div class="row">
-
+                
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="pastChapters">Past Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters" name="pastChapters" aria-describedby="verseHelp" placeholder="1,2,3" value="1,2,3">
+                      <label for="book1">Book 1</label>
+                      <input type="text" class="form-control" id="book1" name="book1" aria-describedby="verseHelp" placeholder="Romans" value="Romans">
+                      <small id="book1help" class="form-text text-muted">Book</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="pastChapters1">Past Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters1" name="pastChapters1" aria-describedby="verseHelp" placeholder="1,2,3" value="1,2,3">
                       <small id="pastChapterHelp" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
                     </div>
                 </div>
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="pastFraction">Fraction (past content)</label>
-                      <input type="number" min="0" max="1" class="form-control" id="pastFraction" name="pastFraction" value="0.5" readonly=true>
-                      <!--<small id="verseHelp" class="form-text text-muted">All scripture.</small>-->
-                    </div>
-                </div>
-
-                <div class="col-sm-3">
-                    <div class="form-group">
-                      <label for="currentChapters">Current Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters" name="currentChapters" aria-describedby="verseHelp" value="4,5">
-                      <small id="pastChapterHelp" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                      <label for="currentChapters1">Current Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters1" name="currentChapters1" aria-describedby="verseHelp" value="4,5">
+                      <small id="pastChapterHelp1" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
                     </div>
                 </div>
 
@@ -83,6 +83,37 @@
                 </div>
 
             </div>
+
+            <div class="row">
+                
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="book2">Book 2 (if any)</label>
+                      <input type="text" class="form-control" id="book2" name="book2" aria-describedby="verseHelp" placeholder="James" value="James">
+                      <small id="book2help" class="form-text text-muted">Book</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="pastChapters2">Past Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters2" name="pastChapters2" aria-describedby="verseHelp" placeholder="1,2,3" value="">
+                      <small id="pastChapterHelp1" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="form-group">
+                      <label for="currentChapters2">Current Chapters</label>
+                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters2" name="currentChapters2" aria-describedby="verseHelp" value="">
+                      <small id="currentChapterHelp2" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                    </div>
+                </div>
+
+
+            </div>
+
 
             <div class="row">
 

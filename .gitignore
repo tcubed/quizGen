@@ -1,0 +1,10 @@
+
+# file types to ignore
+*.docx
+*.xls*
+*.pdf
+*.log
+*ipynb_checkpoints
+
+# directories to ignore
+_old/

@@ -19,10 +19,17 @@ from quizGen import quizGenerator
 print('>>>>>>flask_app<<<<<<<')
 # instance generator
 #fnxls=r'MatthewDistrict_2020_mod.xls'
-fnxls=r'MatthewDistrict_20201004.xls'
+#fnxls=r'MatthewDistrict_20201004.xls'
+fnxls=r'RomansJames_20210828.xls'
 fnxls=os.path.join('mysite','quizGen',fnxls)
 
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+
+print('os.getcwd():',os.getcwd())
+print('os.listdir():',os.listdir())
+print('find fnxls? (%s):%r'%(fnxls,os.path.exists(fnxls)))
+
+print('instance quiz generator and writer...')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 QW=quizGenerator.QuizWriter()
 
 def configQuiz(content,division,nquiz,nextra):
@@ -46,7 +53,8 @@ def configQuiz(content,division,nquiz,nextra):
         QG.quizDistribution['q']['limit']=(150,)
         QG.quizDistribution['ft']['limit']=(150,)
 
-    for k in ['q','ft','int','cr','ma','sit']:
+    # set to Local set for all question types
+    for k in QG.quizDistribution.keys():
         QG.quizDistribution[k]['set']=('Local',)
 
     # gen quizzes
@@ -148,6 +156,7 @@ app.config["DEBUG"] = True
 comments = []
 msg=[]
 
+print('define routes...')
 # configure quiz
 #fnxls='quizgen/MatthewDistrict_2020_mod.xls'
 #QG=quizGenerator.QuizGenerator(fn=fnxls)
@@ -182,13 +191,23 @@ def quizgen():
         #
         # TODO: error-handling
         try:
-            oldch=getRange(request.form["pastChapters"])
-            newch=getRange(request.form["currentChapters"])
-            oldf=float(request.form["pastFraction"])
+            # book 1 info
+            book1=request.form['book1']
+            oldch1=getRange(request.form["pastChapters1"])
+            newch1=getRange(request.form["currentChapters1"])
+            # book2 info
+            book2=request.form['book2']
+            oldch2=getRange(request.form["pastChapters2"])
+            newch2=getRange(request.form["currentChapters2"])
+            
+            # extra info
+            #oldf=float(request.form["pastFraction"])
             newf=float(request.form["currentFraction"])
             nquiz=int(request.form["nquiz"])
             nextra=int(request.form["nextra"])
             division=request.form['division']
+            
+            # output info
             #outfn=safe_join('.',request.form['outfile'])
             outfn=request.form['outfile']
             outfmt=request.form['format']
@@ -202,8 +221,18 @@ def quizgen():
             print('never get here')
 
         # configure quiz
-        content={'past':{'frac':oldf,'content':[('Matthew',oldch)]},
-                 'current':{'frac':newf,'content':[('Matthew',newch)]}}
+        #content={'past':{'frac':oldf,'content':[('Matthew',oldch)]},
+        #         'current':{'frac':newf,'content':[('Matthew',newch)]}}
+        content={'past':{'frac':1-newf,'content':[(book1,oldch1)]},
+                 'current':{'frac':newf,'content':[(book1,newch1)]}}
+        #content={'past':{'frac':oldf,'content':[('Matthew',oldch)]},
+        #         'current':{'frac':newf,'content':[('Matthew',newch)]}}
+        #if()
+        #content['past']['content']
+        if(len(book2)):
+            content['past']['content'].append((book2,oldch2))
+            content['current']['content'].append((book2,newch2))
+        
         print('division: %s, nquiz: %d, nextra: %d, content: %s'%(division,nquiz,nextra,str(content)));
 
         #

@@ -7,30 +7,38 @@ np.random.seed(1)
 np.random.seed(2132021)
 importlib.reload(quizGenerator)
 
-QDAT={'AAC':{'date':'2020xxxx','datestr':'x/x/2020',
-             'prefix':r'quizzes/2020/AAC/AAC',
-             'A':{'past':[1,2,3],'current':[4,5,6]},
-             'B':{'past':[1,2,3],'current':[4,5,6]}},
+QDAT={'AAC':{'date':'2021xxxx','datestr':'x/x/2021',
+             'prefix':r'quizzes/2021/AAC/AAC',
+             'A':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]},
+             'B':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]}},
       
-      'Marshfield':{'date':'20201018','datestr':'10/18/2020',
-             'prefix':r'quizzes/2020/Marshfield/Marshfield',
-             'A':{'past':[1,2,3,4,5,6],'current':[7]},
-             'B':{'past':[7],'current':[7]}},
+      'Marshfield':{'date':'20211018','datestr':'10/18/2021',
+             'prefix':r'quizzes/2021/Marshfield/Marshfield',
+             'A':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]},
+             'B':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]}},
       
-      'NCD':{'date':'2020xxxx','datestr':'x/x/2020',
+      'NCD':{'date':'2021xxxx','datestr':'x/x/2021',
              'prefix':r'quizzes/2020/NCD/NCD',
-             'A':{'past':[1,2],'current':[3,4]},
-             'B':{'past':[1,2],'current':[3,4]}},
+             'A':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]},
+             'B':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]}},
       
       'WGL':{'date':'20210515','datestr':'5/15/2021',
              'prefix':r'quizzes/2020/WGL/WGL',
-             'A':{'past':[1,2,3,4,5,6,7,8,9,10,11,12,14,15],
-                  'current':[16,17,18,19,20,21,22,23,24,25,26,27,28]},
-             'B':{'past':[26],'current':[27,28]}}
+             'A':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]},
+             'B':{'past':[('Romans',[1,],)],
+                  'current':[('Romans',[1,])]}}
       }
 
 #fnxls=r'2020_Matthew/MatthewDistrict_2020.xls'
-fnxls=r'2020_Matthew/MatthewDistrict_20201203.xls'
+#fnxls=r'2020_Matthew/MatthewDistrict_20201203.xls'
+fnxls=r'2021_RomansJames/RomansJames_20210828.xls'
 #pnaac=r'quizzes/2020/AAC/AAC'
 #pnmarsh=r'quizzes/2020/Marshfield/EA'
 #pnncd=r'quizzes/2020/NCD/NCD'
@@ -55,13 +63,13 @@ msg=[{'type':'p',
 # %% Internationals practice
 np.random.seed(20210151)
 district='WGL'
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT[district]['A']['past']
 current=QDAT[district]['A']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
-            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
             }
 
 # add custom limits for certain question types
@@ -81,13 +89,13 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 # %% WGL A meet quizzes
 np.random.seed(20210151)
 district='WGL'
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT[district]['A']['past']
 current=QDAT[district]['A']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
-            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
             }
 
 # add custom limits for certain question types
@@ -107,13 +115,13 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 # %% WGL B meet quizzes
 np.random.seed(202104102)
 district='WGL'
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT[district]['B']['past']
 current=QDAT[district]['B']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
-            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
             }
 
 # add custom limits for certain question types
@@ -131,19 +139,21 @@ ttl='%s B Meet Quizzes - %s'%(district,QDAT[district]['datestr'])
 QW.save(fn,qdat,title=ttl,msg=msg)
     
 # %% AAC A practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+importlib.reload(quizGenerator)
+
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT['AAC']['A']['past']
 current=QDAT['AAC']['A']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':[('Matthew',past)]},
-            'current':{'frac':0.5, 'content':[('Matthew',current)]}
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
             }
 
 # add custom limits for certain question types
 QG.quizDistribution['q']['limit']=(150,300)
 QG.quizDistribution['ft']['limit']=(150,300)
-for k in ['q','ft','int','cr','ma']:
+for k in ['q','ft','int','cr','ma','sit']:
     QG.quizDistribution[k]['set']=('Local',)
     
 qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
@@ -156,7 +166,7 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 
 
 # %% AAC B practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT['AAC']['B']['past']
@@ -185,7 +195,7 @@ rs=np.random.get_state()
 print('randomstate: %d'%rs[1][0])
 importlib.reload(quizGenerator)
 
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 QG.verbose=True
 # partial content
 past=QDAT['Marshfield']['A']['past']
@@ -210,7 +220,7 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 
 
 # %% Marshfield B practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT['Marshfield']['B']['past']
@@ -234,7 +244,7 @@ ttl='Marshfield B Practice Quizzes - %s'%QDAT['Marshfield']['datestr']
 QW.save(fn,qdat,title=ttl,msg=msg)
 
 # %% NCD A practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT['NCD']['A']['past']
@@ -259,7 +269,7 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 
 
 # %% NCD B practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='gospel')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
 # partial content
 past=QDAT['NCD']['B']['past']

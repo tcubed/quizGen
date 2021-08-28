@@ -121,7 +121,7 @@ def countTypes(df,quizDistribution):
 class QuizGenerator():
     def __init__(self,fndatabase,quizType='epistle',quizDistribution=None):
         #print('QuizGenerator initialized.')
-        
+        assert os.path.exists(fndatabase),"can't find database: %s"%fndatabase
 
         self.quizType=quizType
         self.nquiz=1
@@ -359,6 +359,9 @@ class QuizGenerator():
         for period,v in self.quizMakeup.items():
             frames=[]
             #for bk,ch,grp in v['content']:
+            
+            #sprint('period:',period,' content:',v['content'])
+                
             for bk,ch in v['content']:
                 #print('%s: book %s, ch %s'%(period,bk,str(ch)))
                 df1=df[(df['BK']==bk) & df['CH'].isin(ch)]
