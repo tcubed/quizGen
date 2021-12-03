@@ -159,8 +159,6 @@ class QuizGenerator():
         #
         self.scramblePeriod=1   # set to zero to have questions by period (as a check)
         self.rules2013=False
-        self.loose=False
-        self.allowLoose=False
 
         # inits
         self.quizzes=None
@@ -407,7 +405,7 @@ class QuizGenerator():
 
         self.quizContent=Q
 
-    def pickQuestion(self,dfquiz,dfremaining,qtype=None,BCV=None,questionCounts=None,loose=False):
+    def pickQuestion(self,dfquiz,dfremaining,qtype=None,BCV=None,questionCounts=None):
         """Pick a question given the current distribution and remaining 
         questions.
 
@@ -444,9 +442,6 @@ class QuizGenerator():
                     tcount[qt]+=questionCounts[qt]
                 # if the count is less than the minimum, then the minmet flag is False
                 if(tcount[qt]<qdata['range'][0]): minmet=False
-                
-            if(loose):
-                minmet=True
             #print('***: pick question ***')
             #print(tcount)
             #print('minmet: %r'%minmet)
@@ -456,8 +451,8 @@ class QuizGenerator():
             #else: print('min is NOT met')
             # calc prob of picking each type
             keys=list(self.quizDistribution.keys())
-            n2satisfy=[]
-            #typeRemaining={}
+            n=[]
+            typeRemaining={}
             for qt in keys:
                 qdata=self.quizDistribution[qt]
                 if(minmet):
@@ -467,43 +462,20 @@ class QuizGenerator():
                     # if minimum is not met, then weights determined from questions remaining
                     # yet to be filled to satisfy the minimum
                     v=qdata['range'][0]-tcount[qt]
-                n2satisfy.append(v)
-                
-                #typeRemaining[qt]=v
+                n.append(v)
+                typeRemaining[qt]=v
                 #print('%s: questions left: %d'%(qt,v))
             #print(n)
             #print(typeRemaining)
-            typeRequirements=dict(zip(keys,n2satisfy))
-            logger.debug('requirements: %s'%str(typeRequirements))
-            logger.debug('current count: %s'%str(tcount))
-            n0=np.maximum(0,n2satisfy)
-            #logger.debug(n0)
-            weight=[x/sum(n0) for x in n0]
-            #weight=np.maximum(0,weight)
-            msg='weight: %s'%str(dict(zip(keys,[round(x,2) for x in weight])))
-            logger.debug(msg)
+            weight=[x/sum(n) for x in n]
             #print(weight)
 
             # get the question type
             qtpick=np.random.choice(keys,p=weight)
             #print('picked %s'%qtpick)
-            #msg='Picked %s'%qtpick
-            #logger.debug(msg)
-            #msg='typeRequired: %s'%str(typeRemaining)
-            #logger.debug(msg)
-        elif(qtype=='any'):
-            # pick any (e.g. 16AB-20AB)
-            df=dfremaining[dfremaining['used']==0]
-            tcount=countTypes(df,self.quizDistribution)
-            n=list(tcount.values())
-            weight=[x/sum(n) for x in n]
-            keys=list(tcount.keys())
-            qtpick=np.random.choice(keys,p=weight)
             
-            #a=df['TYPE'].value_counts()
-            logger.info(tcount)
-            #1/0
-            nq=0
+            msg='typeRemaining: %s'%str(typeRemaining)
+            logger.debug(msg)
         else:
             nq=0
             qtpick=qtype
@@ -519,8 +491,6 @@ class QuizGenerator():
         else:
             df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types'])) & (dfremaining['used']==0)]
         #print('df orig rows: %d'%df.shape[0])
-        msg='%d unused %s questions remaining.'%(df.shape[0],qtpick)#'df: %d'%df.shape[0]
-        logger.info(msg)
 
         # if there is a question in the quiz, exclude book-chapter-verses that are already in the quiz
         if(nq):
@@ -531,43 +501,20 @@ class QuizGenerator():
             #print('unique values: %d'%len(uv))
             df=df[~df['BCV'].isin(uv)]
             #print('df rows, that not same BCV: %d'%df.shape[0])
-        
+
         repeat=False
         if(df.shape[0]==0):
             # if there are no questions in the dataframe, we've run out!  Time to repeat.
             #print('%s repeat!'%qtpick)
-            logger.warning('No %s questions left whose book-chapter-verse not already in quiz.'%qtpick)
-            
             repeat=True
             # pick among all remaining questions of this type
             if(qtpick=='sit'):
                 df=dfremaining[(dfremaining['TYPE'].str.lower().str.startswith(qtpick))]
             else:
                 df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types']))]
+            #print('df rows, w/repeats: %d'%df.shape[0])
+        
 
-            # drop all questions that have already been used this quiz
-            uv=dfquiz.index.unique()
-            df=df[~df.index.isin(uv)]
-            # drop questions not part of the same verse
-            if(nq):
-                uv=dfquiz['BCV'].unique().tolist()
-                if(BCV!=None):
-                    uv.extend(BCV)
-                df=df[~df['BCV'].isin(uv)]
-            
-            logger.info('%s questions w/repeats, whose verse not already in: %d'%(qtpick,df.shape[0]))
-
-        if(df.shape[0]==0):
-            # if STILL no questions, then relax the B-C-V
-            # pick among all remaining questions of this type
-            if(qtpick=='sit'):
-                df=dfremaining[(dfremaining['TYPE'].str.lower().str.startswith(qtpick)) & (dfremaining['used']==0)]
-            else:
-                df=dfremaining[(dfremaining['TYPE'].str.lower().isin(qdata['types'])) & (dfremaining['used']==0)]
-            
-            logger.info('Relax B-C-V.  %s unused questions: %d'%(qtpick,df.shape[0]))
-            
-            
         # grab one question
         #print('df rows: %d'%df.shape[0])
         if(self.rules2013==True):
@@ -597,9 +544,9 @@ class QuizGenerator():
                     raise Exception('too many draws for CRMA/CVRMA.  can''t make it work')
         else:
             if(len(df)==0):
-                msg='No %s questions survived this pick because of exclusions.'%qtpick
+                msg='No %s questions survived this pick.'%qtpick
                 logger.debug(msg)
-                #print(msg)
+                print(msg)
                 return dfquiz,dfremaining
             q=df.sample(n=1)
 
@@ -607,13 +554,12 @@ class QuizGenerator():
         
         q['used']=1
         if(repeat): q['FLAGS']+='R'
-        row=q.iloc[0]
-        logger.info('Picked %s from %s'%(qtpick,row['BCV']))
+        #display(q)
 
         # add to current quiz
         dfquiz=pd.concat([dfquiz,q])
 
-        # set this question to 'used'
+        # set this questions to 'used'
         #dfremaining.drop(q.index,inplace=True)
         dfremaining.at[q.index,'used']=1
 
@@ -652,7 +598,6 @@ class QuizGenerator():
         Q2=pd.DataFrame()
         Q3=pd.DataFrame()
         periodCounts={}
-        loose=False
 
         #
         # pick first 20 questions -- these go in the dateframe, Q1
@@ -667,30 +612,19 @@ class QuizGenerator():
             if(self.verbose):
                 msg='picking first %d questions from %s'%(nq,period)
                 logger.info(msg)
-                
             #for qi in range(nq):
             initNum=len(Q1)
             iter=0
             while((len(Q1)-initNum)<nq):
                 iter+=1
-                if(iter>(3*nq)):
+                if(iter>(2*nq)):
                     msg='Cannot seem to generate enough 1-20 questions to meet distribution.  ' \
                         'This may be because too few chapters in one of the periods.  Consider ' \
                         'rerunning to get a different set or changing chapter ranges.'
                     raise Exception(msg)
                 #print('...%d'%qi)
                 #print('pick question from %s'%period)
-                nq_old=len(Q1)
-                
-                logger.debug('nq_old: %d'%nq_old)
                 Q1,dfremaining=self.pickQuestion(Q1,dfremaining)
-                if(len(Q1)==nq_old):
-                    if((iter>(2*nq)) and (self.allowLoose==True)):
-                        #self.loose=True
-                        loose=True
-                        logger.info('LOOSE!!')
-                        Q1,dfremaining=self.pickQuestion(Q1,dfremaining,loose=True)
-                
                 logger.debug('Questions 1-20: %d questions (iter: %d)'%(len(Q1),iter))
                 #display('count: %d'%dfremaining['used'].value_counts().iloc[1])
 
@@ -747,14 +681,7 @@ class QuizGenerator():
                 if(iter>(nq*2)):
                     raise Exception('Cannot seem to generate enough 16+ questions.')
                 #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
-                
-                q2len=len(Q2)
-                Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts,qtype='any')
-                
-                #if(len(Q2)==q2len):
-                #    logger.info('LOOSE!!')
-                #    Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts,loose=True)
-                
+                Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
                 logger.debug('Questions 16AB-20AB: %d questions (iter: %d)'%(len(Q2),iter))
                 if(Q2.shape[0]>=nq2): break
 
@@ -868,8 +795,7 @@ class QuizGenerator():
         stats={#'min':self._countTypes(Q1),
                'min':countTypes(Q1,self.quizDistribution),
                'max':q12counts,
-               'period':periodCounts,
-               'loose':loose}
+               'period':periodCounts}
 
         return dfq,C,stats
 
@@ -940,7 +866,6 @@ class QuizGenerator():
 
 class QuizWriter():
     def __init__(self):
-        self.loose=False
         pass
         
     def boldText(self, cell, text, keywords):
@@ -1033,8 +958,6 @@ class QuizWriter():
         #
         # add the title
         #
-        if(self.loose):
-            title='%s (loose)'%title
         document.add_heading(title, 0)
 
         #
@@ -1087,14 +1010,9 @@ class QuizWriter():
             chapList=sorted(QZ['CH'].unique())
             logger.debug('chapters: %s'%str(chapList))
             
-            stats=quizData['stats'][qi]
-
             if(qi>0):
                 document.add_page_break()
-            heading='Quiz %d'%(qi+1)
-            if(stats['loose']):
-                heading+=' (loose)'
-            document.add_heading(heading, 1)
+            document.add_heading('Quiz %d'%(qi+1), 1)
 
             table = document.add_table(rows=1, cols=4)
             #table.style = 'LightShading-Accent1'
@@ -1166,7 +1084,7 @@ class QuizWriter():
             #
             # quiz stats
             #
-            
+            stats=quizData['stats'][qi]
             qdist=quizData['distribution']
             if(quizData['type']!='custom'):
                 #

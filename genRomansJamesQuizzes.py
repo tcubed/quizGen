@@ -9,12 +9,12 @@ importlib.reload(quizGenerator)
 
 QDAT={'AAC':{'date':'2021xxxx','datestr':'x/x/2021',
              'prefix':r'quizzes/2021/AAC/AAC',
-             'A':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]},
+             'A':{'past':[('Romans',[1,2,3,4,5,6,7],)],
+                  'current':[('Romans',[8,9,10])]},
              'B':{'past':[('Romans',[1,],)],
                   'current':[('Romans',[1,])]}},
       
-      'Marshfield':{'date':'20211018','datestr':'10/18/2021',
+      'Marshfield':{'date':'20211204','datestr':'12/4/2021',
              'prefix':r'quizzes/2021/Marshfield/Marshfield',
              'A':{'past':[('Romans',[1,],)],
                   'current':[('Romans',[1,])]},
@@ -28,17 +28,23 @@ QDAT={'AAC':{'date':'2021xxxx','datestr':'x/x/2021',
              'B':{'past':[('Romans',[1,],)],
                   'current':[('Romans',[1,])]}},
       
-      'WGL':{'date':'20210515','datestr':'5/15/2021',
-             'prefix':r'quizzes/2020/WGL/WGL',
-             'A':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]},
-             'B':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]}}
+      'WGL':{'date':'20211204','datestr':'12/04/2021',
+             'prefix':r'quizzes/2021/WGL/WGL',
+             'A':{'past':[('Romans',[1,2,3,4,5,6,7],)],
+                  'current':[('Romans',[8,9,10])]},
+             'B':{'past':[('Romans',[8,9],)],
+                  'current':[('Romans',[10])]}},
+      'Virtual':{'date':'2021xxxx','datestr':'x/x/2021',
+             'prefix':r'quizzes/2021/Virtual/Virtual',
+             'A':{'past':[('James',[5,],)],
+                  'current':[('James',[5,])]},
+             'B':{'past':[('James',[5,],)],
+                  'current':[('James',[5,])]}},
       }
 
 #fnxls=r'2020_Matthew/MatthewDistrict_2020.xls'
 #fnxls=r'2020_Matthew/MatthewDistrict_20201203.xls'
-fnxls=r'2021_RomansJames/RomansJames_20210828.xls'
+fnxls=r'2021_RomansJames/RomansJames.xls'
 #pnaac=r'quizzes/2020/AAC/AAC'
 #pnmarsh=r'quizzes/2020/Marshfield/EA'
 #pnncd=r'quizzes/2020/NCD/NCD'
@@ -87,7 +93,8 @@ ttl='%s Intl Practice - %s'%(district,QDAT[district]['datestr'])
 QW.save(fn,qdat,title=ttl,msg=msg)
 
 # %% WGL A meet quizzes
-np.random.seed(20210151)
+#np.random.seed(202110091)
+np.random.seed(202112041)
 district='WGL'
 QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
@@ -101,10 +108,10 @@ QG.quizMakeup={'past':{'frac':0.5,'content':past},
 # add custom limits for certain question types
 QG.quizDistribution['q']['limit']=(150,300)
 QG.quizDistribution['ft']['limit']=(150,300)
-for k in ['q','ft','int','cr','ma','sit']:
+for k in QG.quizDistribution.keys():
     QG.quizDistribution[k]['set']=('Local','District')
     
-qdat=QG.generateQuizTables(nquiz=10,xtra=50)   
+qdat=QG.generateQuizTables(nquiz=7,xtra=20)   
 
 # write quizzes
 QW=quizGenerator.QuizWriter()
@@ -113,7 +120,8 @@ ttl='%s A Meet Quizzes - %s'%(district,QDAT[district]['datestr'])
 QW.save(fn,qdat,title=ttl,msg=msg)
     
 # %% WGL B meet quizzes
-np.random.seed(202104102)
+#np.random.seed(202110092)
+np.random.seed(202112042)
 district='WGL'
 QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
@@ -127,10 +135,11 @@ QG.quizMakeup={'past':{'frac':0.5,'content':past},
 # add custom limits for certain question types
 QG.quizDistribution['q']['limit']=(150,)
 QG.quizDistribution['ft']['limit']=(150,)
-for k in ['q','ft','int','cr','ma','sit']:
+for k in QG.quizDistribution.keys():
     QG.quizDistribution[k]['set']=('Local','District')
     
 qdat=QG.generateQuizTables(nquiz=6,xtra=20)   
+#qdat=QG.generateQuizTables(nquiz=2,xtra=2)
 
 # write quizzes
 QW=quizGenerator.QuizWriter()
@@ -153,7 +162,7 @@ QG.quizMakeup={'past':{'frac':0.5,'content':past},
 # add custom limits for certain question types
 QG.quizDistribution['q']['limit']=(150,300)
 QG.quizDistribution['ft']['limit']=(150,300)
-for k in ['q','ft','int','cr','ma','sit']:
+for k in QG.quizDistribution.keys():
     QG.quizDistribution[k]['set']=('Local',)
     
 qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
@@ -188,6 +197,33 @@ QW=quizGenerator.QuizWriter()
 fn='%s_B_practice_%s.docx'%(QDAT['AAC']['prefix'],QDAT['AAC']['date'])
 ttl='AAC B Practice Quizzes - %s'%QDAT['AAC']['datestr']
 QW.save(fn,qdat,title=ttl,msg=msg)
+
+# %% Virtual A practice quizzes
+importlib.reload(quizGenerator)
+
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
+
+# partial content
+past=QDAT['Virtual']['A']['past']
+current=QDAT['Virtual']['A']['current']
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
+            }
+
+# add custom limits for certain question types
+QG.quizDistribution['q']['limit']=(150,300)
+QG.quizDistribution['ft']['limit']=(150,300)
+for k in QG.quizDistribution.keys():
+    QG.quizDistribution[k]['set']=('Local',)
+    
+qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
+
+# write quizzes
+QW=quizGenerator.QuizWriter()
+fn='%s_ch5_practice_%s.docx'%(QDAT['Virtual']['prefix'],QDAT['Virtual']['date'])
+ttl='Virtual Ch5 Practice Quizzes - %s'%QDAT['Virtual']['datestr']
+QW.save(fn,qdat,title=ttl,msg=msg)
+
 
 # %% Marshfield A practice quizzes
 np.random.seed(1)

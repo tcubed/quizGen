@@ -20,7 +20,7 @@ print('>>>>>>flask_app<<<<<<<')
 # instance generator
 #fnxls=r'MatthewDistrict_2020_mod.xls'
 #fnxls=r'MatthewDistrict_20201004.xls'
-fnxls=r'RomansJames_20210828.xls'
+fnxls=r'RomansJames.xls'
 fnxls=os.path.join('mysite','quizGen',fnxls)
 
 
@@ -78,7 +78,8 @@ def configQuiz(content,division,nquiz,nextra):
     print('create quiz packet %s in %s'%(fn,os.getcwd()));
     chlist=sorted(qdat['quizzes'][0]['CH'].unique())
     print('chlist: %s'%str(chlist))
-
+    
+    QW.loose=QG.loose
     QW.save(fn,qdat,title=ttl)
 
     if(os.path.exists(fntgt)):
