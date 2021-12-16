@@ -436,7 +436,6 @@ class QuizGenerator():
             # assume minimum distribution has been met
             minmet=True
             # get type counts
-            #tcount=self._countTypes(dfquiz)
             tcount=countTypes(dfquiz,self.quizDistribution)
             for qt,qdata in self.quizDistribution.items():
                 # if questionCounts provided, add these to the current counts
@@ -444,16 +443,12 @@ class QuizGenerator():
                     tcount[qt]+=questionCounts[qt]
                 # if the count is less than the minimum, then the minmet flag is False
                 if(tcount[qt]<qdata['range'][0]): minmet=False
-                
+            
+            logger.debug('minimum met: %r'%minmet)
+            
             if(loose):
                 minmet=True
-            #print('***: pick question ***')
-            #print(tcount)
-            #print('minmet: %r'%minmet)
-            #print(tcount)
-            #if(minmet):
-            #    print('minimum is met!')
-            #else: print('min is NOT met')
+            
             # calc prob of picking each type
             keys=list(self.quizDistribution.keys())
             n2satisfy=[]
@@ -469,28 +464,22 @@ class QuizGenerator():
                     v=qdata['range'][0]-tcount[qt]
                 n2satisfy.append(v)
                 
-                #typeRemaining[qt]=v
-                #print('%s: questions left: %d'%(qt,v))
-            #print(n)
-            #print(typeRemaining)
+            if(minmet):
+                logger.debug('maxs: %s'%str([self.quizDistribution[k]['range'][1] for k in keys]))
+            else:
+                logger.debug('mins: %s'%str([self.quizDistribution[k]['range'][0] for k in keys]))
             typeRequirements=dict(zip(keys,n2satisfy))
             logger.debug('requirements: %s'%str(typeRequirements))
             logger.debug('current count: %s'%str(tcount))
+            
+            # calc weights
             n0=np.maximum(0,n2satisfy)
-            #logger.debug(n0)
             weight=[x/sum(n0) for x in n0]
-            #weight=np.maximum(0,weight)
             msg='weight: %s'%str(dict(zip(keys,[round(x,2) for x in weight])))
             logger.debug(msg)
-            #print(weight)
 
             # get the question type
             qtpick=np.random.choice(keys,p=weight)
-            #print('picked %s'%qtpick)
-            #msg='Picked %s'%qtpick
-            #logger.debug(msg)
-            #msg='typeRequired: %s'%str(typeRemaining)
-            #logger.debug(msg)
         elif(qtype=='any'):
             # pick any (e.g. 16AB-20AB)
             df=dfremaining[dfremaining['used']==0]
@@ -501,7 +490,7 @@ class QuizGenerator():
             qtpick=np.random.choice(keys,p=weight)
             
             #a=df['TYPE'].value_counts()
-            logger.info(tcount)
+            logger.info('qtype:any, count: %s'%str(tcount))
             #1/0
             nq=0
         else:
@@ -682,7 +671,7 @@ class QuizGenerator():
                 #print('pick question from %s'%period)
                 nq_old=len(Q1)
                 
-                logger.debug('nq_old: %d'%nq_old)
+                logger.debug('current num questions: %d'%nq_old)
                 Q1,dfremaining=self.pickQuestion(Q1,dfremaining)
                 if(len(Q1)==nq_old):
                     if((iter>(2*nq)) and (self.allowLoose==True)):
@@ -720,7 +709,7 @@ class QuizGenerator():
         q1counts=countTypes(Q1,self.quizDistribution)
         #pprint.pprint(q1counts)
         logger.debug('Question 1-20 counts: %s'%str(q1counts))
-        
+        logger.debug('=================================')
 
         #
         # pick for rest of quiz (16AB, 17AB, 18AB, 19AB, 20AB) -- these go in dataframe, Q2
@@ -749,8 +738,8 @@ class QuizGenerator():
                 #print('pick question %d of supplementary set (16A, etc)'%(qi+1))
                 
                 q2len=len(Q2)
-                Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts,qtype='any')
-                
+                #Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts,qtype='any')
+                Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts)
                 #if(len(Q2)==q2len):
                 #    logger.info('LOOSE!!')
                 #    Q2,dfremaining=self.pickQuestion(Q2,dfremaining,BCV=usedVerses,questionCounts=q1counts,loose=True)
@@ -783,7 +772,10 @@ class QuizGenerator():
 
 
         #display(Q2)
-
+        q2counts=countTypes(Q2,self.quizDistribution)
+        #pprint.pprint(q1counts)
+        logger.debug('Question 16AB-20AB counts: %s'%str(q2counts))
+        logger.debug('=================================')
         #
         # pick a few overtime questions
         #
@@ -801,6 +793,9 @@ class QuizGenerator():
         #for qt,cnt in self._countTypes(Q2).items():
         for qt,cnt in countTypes(Q2,self.quizDistribution).items():
             q12counts[qt]+=cnt
+        
+        logger.debug('Question 1-20AB counts: %s'%str(q12counts))
+        logger.debug('=================================')
         
         #pprint.pprint(q12counts)
 
@@ -1173,13 +1168,13 @@ class QuizWriter():
                 # normal quiz
                 #
                 # -- min distribution
-                msg='Regular quiz distribution (does not include overtime); ';first=1
+                msg='Quiz distribution (<1-20 only>-<total w/AB>; not including overtime); ';first=1
                 # loop through all the types to show minimums
                 for qt,cnt in stats['min'].items():
                     msg+='%s:%d-%d ('%(qt.upper(),cnt,stats['max'][qt])
                     if(first):
                         first=0;
-                        msg+='req: '
+                        msg+='required: '
                     msg+='%d-%d), '%(qdist[qt]['range'][0],qdist[qt]['range'][1])
                 msg=msg[:-2]   # get rid of trailing space and comma at end
                 #
