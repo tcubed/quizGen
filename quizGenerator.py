@@ -776,6 +776,8 @@ class QuizGenerator():
         #pprint.pprint(q1counts)
         logger.debug('Question 16AB-20AB counts: %s'%str(q2counts))
         logger.debug('=================================')
+        
+        
         #
         # pick a few overtime questions
         #
@@ -798,9 +800,24 @@ class QuizGenerator():
         logger.debug('=================================')
         
         #pprint.pprint(q12counts)
-
-        for period,dfremaining in C.items():
-            nq=int(nq3*self.quizMakeup[period]['frac']+1)
+        
+        #
+        # 
+        #
+        numPeriods=len(self.quizMakeup)
+        p=[v['frac'] for v in self.quizMakeup.values()]
+        choices=list(self.quizMakeup.keys())
+        choosePeriods=np.random.choice(choices,size=3,p=p)
+        # all question types need to be different
+        qtypes=list(self.quizDistribution.keys())
+        overtimeTypes=np.random.choice(qtypes,3,replace=False)
+        
+        #for period,dfremaining in C.items():
+        for ii,period in enumerate(choosePeriods):
+            dfremaining=C[period]
+            
+            nq=1
+            #nq=int(nq3*self.quizMakeup[period]['frac']+1)
             if(self.quizType=='custom'): nq=0
 
             if(self.verbose):
@@ -812,9 +829,10 @@ class QuizGenerator():
                 #
                 # for overtime, randomly pick a question type
                 #
-                qt=np.random.permutation(list(self.quizDistribution.keys()))[0]
+                #qt=np.random.permutation(list(self.quizDistribution.keys()))[0]
                 #print(qt)
                 #print(qt[0])
+                qt=overtimeTypes[ii]
                 Q3,dfremaining=self.pickQuestion(Q3,dfremaining,BCV=usedVerses,qtype=qt)
                 logger.debug('Overtime: %d questions'%(len(Q3)))
                 if(Q3.shape[0]>=nq3): break
@@ -828,6 +846,9 @@ class QuizGenerator():
         else:
             nq3=Q3.shape[0]
             lbl=[str(x+1+nq1+nq2) for x in range(nq3)]
+            
+        print(lbl)
+        print(Q3)
         Q3['qn']=lbl
 
         #display(Q3)
