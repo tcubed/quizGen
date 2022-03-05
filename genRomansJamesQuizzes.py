@@ -28,12 +28,12 @@ QDAT={'AAC':{'date':'2021xxxx','datestr':'x/x/2021',
              'B':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
                   'current':[('Romans',[11,12,13,])]}},
       
-      'WGL':{'date':'20211204','datestr':'12/04/2021',
-             'prefix':r'quizzes/2021/WGL/WGL',
-             'A':{'past':[('Romans',[1,2,3,4,5,6,7],)],
-                  'current':[('Romans',[8,9,10])]},
-             'B':{'past':[('Romans',[8,9],)],
-                  'current':[('Romans',[10])]}},
+      'WGL':{'date':'20220212','datestr':'2/12/2022',
+             'prefix':r'quizzes/2022/WGL/WGL',
+             'A':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
+                  'current':[('Romans',[11,12,13,14])]},
+             'B':{'past':[('Romans',[11,12],)],
+                  'current':[('Romans',[13,14])]}},
       'Virtual':{'date':'2021xxxx','datestr':'x/x/2021',
              'prefix':r'quizzes/2021/Virtual/Virtual',
              'A':{'past':[('James',[5,],)],
@@ -94,7 +94,7 @@ QW.save(fn,qdat,title=ttl,msg=msg)
 
 # %% WGL A meet quizzes
 #np.random.seed(202110091)
-np.random.seed(202112041)
+np.random.seed(202202121)
 district='WGL'
 QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 
@@ -121,7 +121,7 @@ QW.save(fn,qdat,title=ttl,msg=msg)
     
 # %% WGL B meet quizzes
 #np.random.seed(202110092)
-np.random.seed(202112042)
+np.random.seed(202202122)
 district='WGL'
 QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
 

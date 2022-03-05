@@ -86,12 +86,12 @@ import logging
 #logging.basicConfig(filename='quiz_generator.log',level=logging.DEBUG)
 # create logger
 logger = logging.getLogger('quiz_generator')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s')
 logger.handlers=[]
 # create console handler and set level to debug
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 # file handler
