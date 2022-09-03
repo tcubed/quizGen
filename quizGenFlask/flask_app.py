@@ -11,26 +11,29 @@ from flask import Flask, redirect, render_template, request, url_for, send_file
 import os, glob
 import traceback
 import time
+import datetime
 import numpy as np
+import ast
 #from docx2pdf import convert
 
 from quizGen import quizGenerator
+from quizGen import quizWriter
 
 print('>>>>>>flask_app<<<<<<<')
 # instance generator
 #fnxls=r'MatthewDistrict_2020_mod.xls'
 #fnxls=r'MatthewDistrict_20201004.xls'
-fnxls=r'RomansJames.xls'
-fnxls=os.path.join('mysite','quizGen',fnxls)
+fnxlsx=r'acts_db.xlsx'
+fnxlsx=os.path.join('mysite','quizGen',fnxlsx)
 
 
 print('os.getcwd():',os.getcwd())
 print('os.listdir():',os.listdir())
-print('find fnxls? (%s):%r'%(fnxls,os.path.exists(fnxls)))
+print('find fnxlsx? (%s):%r'%(fnxlsx,os.path.exists(fnxlsx)))
 
 print('instance quiz generator and writer...')
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
-QW=quizGenerator.QuizWriter()
+QG=quizGenerator.QuizGenerator(fndatabase=fnxlsx,quizType='gospel')
+QW=quizWriter.QuizWriter()
 
 def configQuiz(content,division,nquiz,nextra):
 
@@ -100,7 +103,7 @@ def configQuiz(content,division,nquiz,nextra):
 
     return fn
 
-def getRange(s):
+def getRange_chapterList(s):
     # split by commas
     L=s.split(',')
     print('getRange: ',L)
@@ -114,6 +117,22 @@ def getRange(s):
         else:
             Lf.append(int(li))
     return Lf
+    
+def getRange_chapterVerse(bk,vs):
+    print('getRange_chapterVerse: bk: %s, vs: %s'%(bk,vs))
+    verseIntervals=vs.split(',')
+    print('...verseIntervals: %s'%str(verseIntervals));
+    c=[]
+    for vint in verseIntervals:
+        if(vint==''):
+            continue
+        print('vint: %s'%str(vint));
+        cv1,cv2=vint.split('-')
+        c1,v1=cv1.split(':')
+        c2,v2=cv2.split(':')
+        ci=((bk,int(c1),int(v1)),(bk,int(c2),int(v2)))
+        c.append(ci)
+    return c
 
 def sendToUser(fnquiz,outfn,outfmt):
     #https://www.roytuts.com/how-to-download-file-using-python-flask/
@@ -176,11 +195,46 @@ def index():
     #comments.append(request.form["contents"])
     return redirect(url_for('index'))
 
+@app.route("/visitors", methods=["GET", "POST"])
+def visitors():
+    print('>>>>>visitors<<<<')
+    if request.method == "GET":
+        
+        f=open('visits.log','rt');L=f.readlines();f.close();
+        print('%d visits in log.'%len(L));
+        
+        R=[]
+        for li in L:
+            q=li.split(';');
+            #print('%s: len(q)=%d; q=%s'%(li,len(q),str(q)));
+            
+            if(len(q)==3):
+                J=ast.literal_eval(q[2].strip());
+                if('username' in J):
+                    first,last=J['username'].split();
+                txt='%s;%s;%s'%(q[0],q[1],last)
+                R.append(txt)
+            else:
+                R.append(li)
+        
+        print("page's GET request always announces 'loyalty to the emporer'")
+        return render_template("visitors.html", visitors=R)
+
 @app.route("/quizgen", methods=["GET", "POST"])
 def quizgen():
     print('>>>>>quizgen<<<<')
     if request.method == "GET":
+        # serving the page template
         print('GET')
+        print('visitor from remote ip:',request.remote_addr);
+        print('cookie:',str(request.cookies));
+        
+        # record visit
+        txt=datetime.datetime.now().strftime('%Y-%m-%d %H:%M');
+        txt+='; %s'%request.remote_addr;
+        txt+='; %s'%str(request.cookies);
+        f=open('visits.log','a');f.write('%s\n'%txt);f.close();
+        
         msg=['']
         return render_template("quizgen.html", comments=comments,messages=[''])
         print('never get here')
@@ -194,12 +248,14 @@ def quizgen():
         try:
             # book 1 info
             book1=request.form['book1']
-            oldch1=getRange(request.form["pastChapters1"])
-            newch1=getRange(request.form["currentChapters1"])
+            oldvs1=getRange_chapterVerse(book1,request.form["pastVerses1"])
+            newvs1=getRange_chapterVerse(book1,request.form["currentVerses1"])
+            print("book: %s, oldvs1: %s, newvs1: %s"%(book1,str(oldvs1),str(newvs1)))
             # book2 info
             book2=request.form['book2']
-            oldch2=getRange(request.form["pastChapters2"])
-            newch2=getRange(request.form["currentChapters2"])
+            oldvs2=getRange_chapterVerse(book2,request.form["pastVerses2"])
+            newvs2=getRange_chapterVerse(book2,request.form["currentVerses2"])
+            print("book: %s, oldvs2: %s, newvs2: %s"%(book1,str(oldvs2),str(newvs2)))
             
             # extra info
             #oldf=float(request.form["pastFraction"])
@@ -224,15 +280,19 @@ def quizgen():
         # configure quiz
         #content={'past':{'frac':oldf,'content':[('Matthew',oldch)]},
         #         'current':{'frac':newf,'content':[('Matthew',newch)]}}
-        content={'past':{'frac':1-newf,'content':[(book1,oldch1)]},
-                 'current':{'frac':newf,'content':[(book1,newch1)]}}
+        #content={'past':{'frac':1-newf,'content':[(book1,oldvs1)]},
+        #         'current':{'frac':newf,'content':[(book1,newvs1)]}}
+        content={'past':{'frac':1-newf,'content':oldvs1},
+                 'current':{'frac':newf,'content':newvs1}}
         #content={'past':{'frac':oldf,'content':[('Matthew',oldch)]},
         #         'current':{'frac':newf,'content':[('Matthew',newch)]}}
         #if()
         #content['past']['content']
         if(len(book2)):
-            content['past']['content'].append((book2,oldch2))
-            content['current']['content'].append((book2,newch2))
+            #content['past']['content'].append((book2,oldvs2))
+            #content['current']['content'].append((book2,newvs2))
+            content['past']['content'].append(oldvs2)
+            content['current']['content'].append(newvs2)
         
         print('division: %s, nquiz: %d, nextra: %d, content: %s'%(division,nquiz,nextra,str(content)));
 

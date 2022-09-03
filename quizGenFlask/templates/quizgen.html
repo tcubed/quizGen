@@ -13,10 +13,83 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
         <title>Quiz Generation</title>
+		
+		<script>
+		function setCookie(cname, cvalue, exdays) {
+		  const d = new Date();
+		  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+		  let expires = "expires="+d.toUTCString();
+		  let sameSite= "SameSite=Lax";
+		  document.cookie = cname + "=" + cvalue + ";" +sameSite + ";" + expires + ";path=/";
+		}
+		function getCookie(cname) {
+		  let name = cname + "=";
+		  let ca = document.cookie.split(';');
+		  for(let i = 0; i < ca.length; i++) {
+			let c = ca[i];
+			while (c.charAt(0) == ' ') {
+			  c = c.substring(1);
+			}
+			if (c.indexOf(name) == 0) {
+			  return c.substring(name.length, c.length);
+			}
+		  }
+		  return "";
+		}
+		function deleteCookie(cname){
+			document.cookie = cname+"=; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+		}
+		function deleteCookies(){
+			deleteCookie("username");
+			deleteCookie("displayname");
+			deleteCookie("email");
+			deleteCookie("district");
+			deleteCookie("id");
+		}
+		function validateEmail(emailId){
+			var mailformat = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+			if(emailId.value.match(mailformat)){
+				document.form1.email.focus();
+				return true;
+			} else {
+				alert("Invalid email address.");
+				document.form1.email.focus();
+				return false;
+			}
+		}
+		function register(){
+			var unm=document.getElementById('username').value;
+			var email=document.getElementById('email').value;
+			//var district=document.getElementById('district').value;
+
+			var ok=validateEmail(document.form1.email);
+			if(ok==false){return}
+			var opt=document.getElementById('district').options 
+			var district=opt[opt.selectedIndex].value 
+			
+			var exdays=365*4;
+			setCookie('username', unm, exdays)
+			setCookie('email', email, exdays)
+			setCookie('district', district, exdays)
+
+			//q='api.php?reg'
+			//resp=getText(q,cb_registration);
+			console.log('register() done')
+			window.location.reload(true)
+		}
+		function hasCookie() {
+			let usernm = getCookie("username");
+			if (usernm != "") {
+				console.log("Welcome again " + usernm);
+				document.getElementById('divRegister').style.display='none';
+				document.getElementById('divQuizGen').style.display='block';
+				return true;
+			} 
+		  return false;
+		} 
+		</script>
     </head>
     <body>
-
-
 
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <a class="navbar-brand" href="#">Quiz Generation <span style="color:red;font-weight:bold">(BETA)</span></a>
@@ -35,42 +108,80 @@
             -->
           </div>
         </nav>
-
-
-
-
-
-
-
-        <div class="container" style="margin-top:20px">
+		
+		<!--
+		=========================================================
+		=========================================================
+		                       REGISTRATION
+		=========================================================
+		=========================================================
+		-->
+		<div class="container-fluid" style="margin-top:60px" id="divRegister">
+			<h3>Registration</h3>
+			<p>Registration is to help us support you and for app development.  No funny business.</p>
+			<form name="form1">
+				<div class="input-group mb-3">
+					<span class="input-group-text">Real Name</span>
+					<input type="text" class="form-control" required id="username">
+				</div>
+				<div class="input-group mb-3">
+					<span class="input-group-text">Email</span>
+					<input type="email" class="form-control" required id="email" placeholder="quizzer@example.com">
+				</div>
+				<div class="input-group mb-3">
+					<span class="input-group-text">District</span>
+					<!--
+					<input type="text" class="form-control" pattern="[A-Z]{4}" id="district" required placeholder="ABC">
+					-->
+					<select id="district">
+						<option value="WGL">WGL</option>
+						<option value="NCD">NCD</option>
+						<option value="NED">NED</option>
+						<option value="PNW">PNW</option>
+						<option value="ECD">ECD</option>
+						<option value="METRO">METRO</option>
+						<option value="Other">Other</option>
+					</select>
+				</div>
+				<button type="button" class="btn btn-primary" onclick="register()">Register</button>
+			</form>
+		</div>
+		
+		<!--
+		=========================================================
+		=========================================================
+		                       REGISTRATION
+		=========================================================
+		=========================================================
+		-->
+        <div class="container" style="margin-top:20px;display:none" id="divQuizGen">
             <!--
             <h2>Generate Quiz</h2>
             -->
             <form action="quizgen" method="POST">
             <div class="row">
                 
-
                 <div class="col-sm-3">
                     <div class="form-group">
                       <label for="book1">Book 1</label>
-                      <input type="text" class="form-control" id="book1" name="book1" aria-describedby="verseHelp" placeholder="Romans" value="Romans">
+                      <input type="text" class="form-control" id="book1" name="book1" aria-describedby="verseHelp" placeholder="Acts" value="Acts">
                       <small id="book1help" class="form-text text-muted">Book</small>
                     </div>
                 </div>
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="pastChapters1">Past Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters1" name="pastChapters1" aria-describedby="verseHelp" placeholder="1,2,3" value="1,2,3">
-                      <small id="pastChapterHelp" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                      <label for="pastChapters1">Past Verses</label>
+                      <input type="text" pattern="[0-9-:]+" class="form-control" id="pastVerses1" name="pastVerses1" aria-describedby="verseHelp" placeholder="1:1-1:5" value="1:1-1:5">
+                      <small id="pastChapterHelp" class="form-text text-muted">Verse ranges (e.g. 1:1-4:26)</small>
                     </div>
                 </div>
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="currentChapters1">Current Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters1" name="currentChapters1" aria-describedby="verseHelp" value="4,5">
-                      <small id="pastChapterHelp1" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                      <label for="currentChapters1">Current Verses</label>
+                      <input type="text" pattern="[0-9-:]+" class="form-control" id="currentVerses1" name="currentVerses1" aria-describedby="verseHelp" value="">
+                      <small id="pastChapterHelp1" class="form-text text-muted">Verse ranges (e.g. 1:1-4:26)</small>
                     </div>
                 </div>
 
@@ -85,29 +196,27 @@
             </div>
 
             <div class="row">
-                
-
                 <div class="col-sm-3">
                     <div class="form-group">
                       <label for="book2">Book 2 (if any)</label>
-                      <input type="text" class="form-control" id="book2" name="book2" aria-describedby="verseHelp" placeholder="James" value="James">
+                      <input type="text" class="form-control" id="book2" name="book2" aria-describedby="verseHelp" placeholder="" value="">
                       <small id="book2help" class="form-text text-muted">Book</small>
                     </div>
                 </div>
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="pastChapters2">Past Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="pastChapters2" name="pastChapters2" aria-describedby="verseHelp" placeholder="1,2,3" value="">
-                      <small id="pastChapterHelp1" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                      <label for="pastChapters2">Past Verses</label>
+                      <input type="text" pattern="[0-9-:]+" class="form-control" id="pastVerses2" name="pastVerses2" aria-describedby="verseHelp" placeholder="" value="">
+                      <small id="pastChapterHelp1" class="form-text text-muted">Verse ranges (e.g. 1:1-4:22)</small>
                     </div>
                 </div>
 
                 <div class="col-sm-3">
                     <div class="form-group">
-                      <label for="currentChapters2">Current Chapters</label>
-                      <input type="text" pattern="[0-9-,]+" class="form-control" id="currentChapters2" name="currentChapters2" aria-describedby="verseHelp" value="">
-                      <small id="currentChapterHelp2" class="form-text text-muted">Chapter ranges (e.g. 1,2,3,... or 1-10)</small>
+                      <label for="currentChapters2">Current Verses</label>
+                      <input type="text" pattern="[0-9-:]+" class="form-control" id="currentVerses2" name="currentVerses2" aria-describedby="verseHelp" value="">
+                      <small id="currentChapterHelp2" class="form-text text-muted">Verse ranges (e.g. 1:1-4:22)</small>
                     </div>
                 </div>
 
@@ -261,11 +370,9 @@
 
             </div>
         </div>
-
-
-
-
+	
+	<script>
+	hasCookie();
+	</script>
     </body>
-
-
 </html>
