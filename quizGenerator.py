@@ -175,7 +175,24 @@ class QuizGenerator():
         #           'extraQuestions':{}}
         
         # load database
-        self.loadDatabase(fndatabase)
+        #self.loadDatabase(fndatabase)
+        df=pd.read_excel(fndatabase);
+        df=df.rename(columns={'BOOK':'BK'})
+        df[np.isnan(df['CLUB'])==False]['CLUB'].astype(int)
+        #df['FLAGS']=''
+        df.fillna('', inplace=True)
+        self.database=df
+        
+        # default -- all content
+        content=[]
+        ubk=df['BK'].unique()
+        for bk in ubk:
+            uch=df[df['BK']==bk]['CH'].unique()
+            content.append((bk,list(uch)))
+        self.quizMakeup={'current':{'frac':1,'content':content}}
+        #print('default quizMakeup')
+        #print(self.quizMakeup)
+
         
     #def setQuizType(self,quizType):
     #    self.quizType=quizType
@@ -218,137 +235,9 @@ class QuizGenerator():
     #    self.quizMakeup=quizMakeup
     #    self.nquiz=nquiz
 
-    def loadDatabase(self,fnxls):
-        """Load the question database
+    
 
-        Args:
-            fnxls (string): filename of Excel file
-                The expected format of the Excel file is:
-                    Book, Chapter, Verse, Verse2, Question, Answer, Club
-                    -- Club is added to the database as a flag for 
-                    whether it is part of the 150 or 300 key verses.
-                    Other club labels are possible.
-                    -- This parses the Excel file looking for bolded key 
-                    words.  These are extracted internally.
-
-        This function creates a Pandas DataFrame with the following 
-        column headings:
-            ['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','CLUB',
-              'QKEYWORDS','AKEYWORDS','FLAGS','BCV']
-        Most of these are straightforward from the Excel file except the 
-        following:
-            QKEYWORDS, AKEYWORDS -- keywords in the question or answer 
-                    (comma separated)
-            FLAGS -- currently, this only supports 'repeat'
-            BCV   -- a string like <book>_<chapter>_<verse>
-                    (e.g. HEB_1_1) to help with not asking another 
-                    question that uses the same verse.
-        """
-        #https://stackoverflow.com/questions/12371787/how-do-i-find-the-formatting-for-a-subset-of-text-in-an-excel-document-cell?rq=1
-        # accessing Column 'C' in this example
-        COL_IDX = 5
-
-        book = xlrd.open_workbook(fnxls, formatting_info=True)
-        sht = book.sheet_by_index(0)
-
-        hdr=[]
-        for ii in range(sht.ncols):
-            hdr.append(sht.cell_value(0,ii))
-        #regcol=list(set(range(sht.ncols)).difference((COL_IDX,)))
-
-        L=[]
-        for row_idx in range(1,sht.nrows):
-            #if(row_idx>20): break
-
-            # get non-question fields
-            row={}
-            for ii in range(sht.ncols):
-                txt = sht.cell_value(row_idx, ii)
-                if(isinstance(txt,str)):
-                    txt=txt.replace(u'\xa0', u' ')
-                row[hdr[ii]]=txt
-
-            # read question cell and format list
-            for COL_IDX in [5,6]:
-                text_cell = sht.cell_value(row_idx, COL_IDX)
-                text_cell_xf = book.xf_list[sht.cell_xf_index(row_idx, COL_IDX)]
-
-                # skip rows where cell is empty
-                if not text_cell:
-                    continue
-                #print(text_cell)
-
-                text_cell_runlist = sht.rich_text_runlist_map.get((row_idx, COL_IDX))
-                if text_cell_runlist:
-                    #print(text_cell)
-                    #print('(cell multi style) SEGMENTS:')
-                    #print(text_cell_runlist)
-                    segments = []
-                    for segment_idx in range(len(text_cell_runlist)):
-                        start = text_cell_runlist[segment_idx][0]
-                        # the last segment starts at given 'start' and ends at the end of the string
-                        end = None
-                        if segment_idx != len(text_cell_runlist) - 1:
-                            end = text_cell_runlist[segment_idx + 1][0]
-                        segment_text = text_cell[start:end]
-                        segments.append({
-                            'text': segment_text,
-                            'font': book.font_list[text_cell_runlist[segment_idx][1]]
-                        })
-                        # segments did not start at beginning, assume cell starts with text styled as the cell
-                        if text_cell_runlist[0][0] != 0:
-                            segments.insert(0, {
-                                'text': text_cell[:text_cell_runlist[0][0]],
-                                'font': book.font_list[text_cell_xf.font_index]
-                            })
-
-                    boldlist=[]
-                    for segment in segments:
-                        #if('path' in segment['text']):
-                        #    print('   "%s"'%segment['text'],'italic:',segment['font'].italic,'bold:', segment['font'].bold)
-                        if(segment['font'].bold):
-                            #boldlist.append(segment['text'])
-                            st=segment['text'].replace('.','')
-                            boldlist.extend(st.split())
-                    keywords=','.join(boldlist)
-                else:
-                    #print('(cell single style)',
-                    keywords=''
-
-                # add question and answer keywords
-                if(COL_IDX==5):
-                    row['QKEYWORDS']=keywords
-                else:
-                    row['AKEYWORDS']=keywords
-
-                # add column for flags
-                row['FLAGS']=''
-
-                # column for unique verse identifier
-                row['BCV']='%s_%d_%d'%(row['BK'],int(row['CH']),int(row['VS']))
-
-            L.append(row)
         
-        # make dataframe
-        df=pd.DataFrame(L)
-        # 2019 HEBREWS,1P,2P
-        #df=df[['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','GROUP','QKEYWORDS','AKEYWORDS','FLAGS','BCV']]
-        #df = df.astype({'CH': int, 'VS': int})
-        # 2020 MATTHEW
-        df=df[['BK','CH','VS','VE','TYPE','QUESTION','ANSWER','CLUB','SET','QKEYWORDS','AKEYWORDS','FLAGS','BCV']]
-        df = df.astype({'CH': int, 'VS': int})
-
-        self.database=df
-        
-        # default -- all content
-        content=[]
-        ubk=df['BK'].unique()
-        for bk in ubk:
-            uch=df[df['BK']==bk]['CH'].unique()
-            content.append((bk,list(uch)))
-        self.quizMakeup={'current':{'frac':1,'content':content}}
-        #print('default quizMakeup')
-        #print(self.quizMakeup)
 
     def _getContent(self):
         """Get all the content for the quiz in specified range of 
@@ -357,16 +246,26 @@ class QuizGenerator():
         to restrict those questions.
         """
         df=self.database
+        
+        dfq=df.copy();
+        dfq['bcvf']=df['CH']+df['VS']/1000
+        
         Q={}
         for period,v in self.quizMakeup.items():
             frames=[]
             #for bk,ch,grp in v['content']:
             
-            #sprint('period:',period,' content:',v['content'])
+            #print('period:',period,' content:',v['content'])
                 
-            for bk,ch in v['content']:
+            #for bk,ch in v['content']:
+            for bcvint in v['content']:
+                bk=bcvint[0][0]
+                bcvstart=bcvint[0][1]+bcvint[0][2]/1000
+                bcvend=bcvint[1][1]+bcvint[1][2]/1000
+                
                 #print('%s: book %s, ch %s'%(period,bk,str(ch)))
-                df1=df[(df['BK']==bk) & df['CH'].isin(ch)]
+                #df1=df[(df['BK']==bk) & df['CH'].isin(ch)]
+                df1=dfq[(dfq['BK']==bk) & (dfq['bcvf']>=bcvstart)&(dfq['bcvf']<=bcvend)]
 
                 #if(len(grp)):
                 #    df1=df1[df1['CLUB'].isin(grp)]
@@ -920,350 +819,7 @@ class QuizGenerator():
         
         return self.getQuizData()
 
-class QuizWriter():
-    def __init__(self):
-        self.loose=False
-        pass
-        
-    def boldText(self, cell, text, keywords):
-        """boldText"""
-        if(len(keywords)<1 or (len(keywords[0])<1)):
-            p=cell.paragraphs[-1]
-            p.add_run(text)
-        else:
-            keywords=list(set(keywords))
-            nk=len(keywords)
-            # get start/len for keywords
-            #print(text)
-            IL=[]
-            for k in keywords:
-                #print('KEYWORD: %s'%k)
-                #IL.append((text.index(k),len(k)))
-                rei=re.finditer(k,text)
-                for m in rei:
-                    k=m.group()
-                    startidx=m.span()[0]
-                    #print('keyword: %s, startidx: %d'%(k,startidx))
-                    IL.append((k,startidx))
-            
-            # sort according to starting position
-            IL=sorted(IL,key=lambda x:x[1])
-            #print(keywords)
-            #print('IL: %s'%str(IL))
-            #if('paths' in keywords):
-            #    print('IL: %s'%str(IL))
 
-            # start
-            txt='%s'%text[:IL[0][1]]
-            #txt='something'
-            p=cell.paragraphs[-1]
-            p.add_run(txt)
-            
-            for ii,il in enumerate(IL):
-                kw,startidx=il
-                # bold keyword
-                p.add_run(kw).bold = True
-
-                # text in between keywords
-                #start=IL[ii][0]+IL[ii][1]
-                start=startidx+len(kw)
-                end=None
-                if(ii<(len(IL)-1)):
-                    #end=IL[ii+1][0]
-                    end=IL[ii+1][1]
-                txt=text[start:end]
-                p.add_run(txt).bold = False
-
-
-
-    def save(self,fn,quizData,title='CMA Bible Quizzes',msg=None):
-        """This method creates the quiz packet Word document.
-        
-         Args:
-           fn (string): output filename of quiz
-           quizData (dict): quizData object
-           title (string): title in the document
-           msg (string): optional message to write
-        """
-        
-
-        #
-        # document, paragraph, section, font settings
-        #
-        # -- width for columns: question number, type, Q/A, reference
-        if(quizData['type']=='epistle'):
-            width=[Inches(0.375),Inches(0.375),Inches(5.25),Inches(1.)]
-        else:
-            width=[Inches(0.375),Inches(1),Inches(4.625),Inches(1.)]
-
-        document = Document()
-        sections = document.sections
-        section = sections[0]
-        section.left_margin = Inches(0.75)
-        section.top_margin = Inches(0.5)
-        section.bottom_margin = Inches(0.5)
-        section.right_margin = Inches(0.5)
-
-        style = document.styles['Normal']
-        font = style.font
-        font.name = 'Arial'
-        font.size = Pt(9)
-
-        paragraph_format = document.styles['Normal'].paragraph_format
-        paragraph_format.space_after = Pt(3)
-
-        #
-        # add the title
-        #
-        #if(self.loose):
-        loose=False
-        for qd in quizData['stats']:
-            loose=loose or qd['loose']
-        if(loose):
-            title='%s (loose)'%title
-        document.add_heading(title, 0)
-
-        #
-        # add the message
-        #
-        # if(msg==None):
-        #     if(self.quizType!='custom'):
-        #         msg={'intro':'This is a quiz packet for WGLD.  The quiz packet should have these characteristics:',
-        #             'list':['Unique questions for each quiz (if possible) in the packet',
-        #                     'Satisfaction of question minimums and maximums for each type',
-        #                     '"A" division quizzes have 50% current and 50% past periods.',
-        #                     '"B" division quizzes are only current content, and will therefore have repeats.'+\
-        #                     '  We have tried to keep these in the alternative questions 16A, 16B, etc.  Replace as necessary.']}
-        #     else:
-        #         msg={'intro':'This is a custom quiz.'}
-        
-        # p = document.add_paragraph(msg['intro'])
-
-        # #document.add_paragraph('Unique questions for each quiz (if possible) in the packet', style='List Bullet')
-        # #document.add_paragraph(
-        # #    'Satisfaction of question minimums and maximums for each type', style='List Bullet'
-        # #)
-        # if('list' in msg):
-        #     for m in msg['list']:
-        #         document.add_paragraph(m, style='List Bullet')
-
-        # default message
-        if(msg==None):
-            msg=[{'type':'p','text':'This is a CM&A quiz packet.  The quiz packet should have these characteristics:'},
-                 {'type':'list','text':['Unique questions for each quiz (if possible) in the packet',
-                            'Satisfaction of question minimums and maximums for each type (2018 rules)',
-                            '"A" division quizzes have 50% current and 50% past periods.',
-                            '"B" division quizzes are only current content, and will therefore have repeats.'+\
-                            '  We have tried to keep these in the alternative questions 16A, 16B, etc.  Replace as necessary.']}]
-
-        for ii,m in enumerate(msg):
-            if(m['type']=='p'):
-                # normal paragraph
-                p = document.add_paragraph(m['text'])
-            elif(m['type']=='list'):
-                # bulleted list
-                for mitem in m['text']:
-                    document.add_paragraph(mitem, style='List Bullet')
-
-        #
-        # loop through quizzes
-        #
-        for qi,QZ in enumerate(quizData['quizzes']):
-
-            chapList=sorted(QZ['CH'].unique())
-            logger.debug('chapters: %s'%str(chapList))
-            
-            stats=quizData['stats'][qi]
-
-            if(qi>0):
-                document.add_page_break()
-            heading='Quiz %d'%(qi+1)
-            if(stats['loose']):
-                heading+=' (loose)'
-            document.add_heading(heading, 1)
-
-            table = document.add_table(rows=1, cols=4)
-            #table.style = 'LightShading-Accent1'
-            table.style = 'LightGrid-Accent1'
-            hdr_cells = table.rows[0].cells
-            hdr_cells[0].text = '#'
-            hdr_cells[1].text = 'Type'
-            hdr_cells[2].text = 'Question'
-            hdr_cells[3].text = 'Verse'
-            for k,cell in enumerate(hdr_cells):
-                cell.width=width[k]
-
-            #
-            # loop through questions
-            #
-            ii=0
-            for idx,row in QZ.iterrows():
-                ii+=1
-                row_cells = table.add_row().cells
-
-                # Question Number
-                row_cells[0].text = row.qn
-                # Question Type
-                row_cells[1].text = row.TYPE
-
-                # https://stackoverflow.com/questions/36894424/creating-a-table-in-python-docx-and-bolding-text#36897305
-
-                #
-                # Question/Answer cell
-                #
-                c=row_cells[2]
-                q='Q: %s'%row.QUESTION
-                keywords=row.QKEYWORDS.split(',')
-
-                self.boldText(cell=c, text=q, keywords=keywords)
-                c.add_paragraph()
-
-                #
-                # ANSWER
-                #
-                a='A: %s'%row.ANSWER
-                keywords=row.AKEYWORDS.split(',')
-                self.boldText(cell=c, text=a, keywords=keywords)
-
-                # book, chapter, verse, and club (e.g. 150,300)
-                txt='%s %s:%s'%(row.BK,row.CH,row.VS)
-                if(isinstance(row.VE,float)):
-                    txt+='-%s'%str(int(row.VE))
-                
-                txt+='\n('
-                if(isinstance(row.CLUB,float)):
-                    #txt+='\n(%d)'%row.CLUB
-                    txt+='%d,'%row.CLUB
-                if(row.SET is not None):
-                    txt+='%s'%row.SET
-                txt+=')'
-                
-                # additional flags (repeats)
-                c=row_cells[3]
-                if('R' in row['FLAGS']):
-                    txt+='\nrepeat'
-                    c._tc.get_or_add_tcPr().append(parse_xml(r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
-                c.text=txt
-
-                # adjust width
-                for k,cell in enumerate(row_cells):
-                    cell.width=width[k]
-
-            #
-            # quiz stats
-            #
-            
-            qdist=quizData['distribution']
-            if(quizData['type']!='custom'):
-                #
-                # normal quiz
-                #
-                # -- min distribution
-                msg='Quiz distribution (<1-20 only>-<total w/AB>; not including overtime); ';first=1
-                # loop through all the types to show minimums
-                for qt,cnt in stats['min'].items():
-                    msg+='%s:%d-%d ('%(qt.upper(),cnt,stats['max'][qt])
-                    if(first):
-                        first=0;
-                        msg+='required: '
-                    msg+='%d-%d), '%(qdist[qt]['range'][0],qdist[qt]['range'][1])
-                msg=msg[:-2]   # get rid of trailing space and comma at end
-                #
-                # -- period stats
-                #
-                msg+='; Question counts by period (numbered): '
-                for period,cnts in stats['period'].items():
-                    msg+='%s=%d; '%(period,cnts[0])
-                msg=msg[:-2]
-            else:
-                # custom quiz
-                msg='Custom quiz distribution; '
-                #for qt,cnt in self._countTypes(QZ).items():
-                for qt,cnt in countTypes(QZ,qdist).items():
-                    msg+=' %s(%d),'%(qt,cnt)
-                msg=msg[:-1]
-                print(msg)
-            #
-            # add stats to document
-            #
-            document.add_paragraph(msg)
-        
-        #
-        # extra question
-        #
-        if(quizData['type']!='custom'):
-            document.add_page_break()
-            document.add_heading('Extra Questions', level=1)
-
-            msg="""This section contains extra questions of each type for use during the quiz day.
-            Make sure to mark the questions used as you use them.
-            """
-            p = document.add_paragraph(msg)
-
-            for qt,v in quizData['extraQuestions'].items():
-                tlist=', '.join([x.upper() for x in quizData['distribution'][qt]['types']])
-                document.add_heading('%s Extra Questions (%s)'%(quizData['distribution'][qt]['label'],tlist), level=2)
-                
-                table = document.add_table(rows=1, cols=4)
-                table.style = 'LightGrid-Accent1'
-                hdr_cells = table.rows[0].cells
-                hdr_cells[0].text = '#'
-                hdr_cells[1].text = 'Type'
-                hdr_cells[2].text = 'Question'
-                hdr_cells[3].text = 'Verse'
-                for k,cell in enumerate(hdr_cells):
-                    cell.width=width[k]
-                    
-                ii=0
-                for idx,row in quizData['extraQuestions'][qt].iterrows():
-                    ii+=1
-                    row_cells = table.add_row().cells
-                    row_cells[0].text = str(ii)
-                    row_cells[0].width=width[0]
-                    row_cells[1].text = row.TYPE
-                    #row_cells[2].text = 'Q: %s\n\nA: %s'%(row.QUESTION,row.ANSWER)
-
-                    #
-                    # QUESTION
-                    #
-                    c=row_cells[2]
-                    q='Q: %s'%row.QUESTION
-                    keywords=row.QKEYWORDS.split(',')
-                    self.boldText(cell=c, text=q, keywords=keywords)
-
-                    c.add_paragraph()
-                    #c.add_paragraph()
-
-                    #
-                    # ANSWER
-                    #
-                    a='A: %s'%row.ANSWER
-                    keywords=row.AKEYWORDS.split(',')
-                    self.boldText(cell=c, text=a, keywords=keywords)
-
-                    #
-                    # VERSES
-                    #
-                    txt='%s %s:%s'%(row.BK,row.CH,row.VS)
-                    if(isinstance(row.VE,float)):
-                        txt+='-%s'%str(int(row.VE))
-                    if(isinstance(row.CLUB,float)):
-                        txt+='\n(%d)'%row.CLUB
-
-                    #if(not np.isnan(row.VE)):
-                    #    txt+='-%s'%row.VE
-                    #row_cells[3].text = txt
-                    c=row_cells[3]
-                    if('R' in row['FLAGS']):
-                        txt+='\nrepeat'
-                        c._tc.get_or_add_tcPr().append(parse_xml(r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
-                    c.text = txt
-
-                    for k,cell in enumerate(row_cells):
-                        cell.width=width[k]
-
-        document.save(fn)
-        print('Done writing quiz packet (%s)'%fn)
 
 if(__name__=='__main__'):
     print('quiz gen is not meant to be called directly')
