@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import quizGenerator
+import quizWriter
 
 import importlib
 import numpy as np
@@ -7,44 +8,52 @@ np.random.seed(1)
 np.random.seed(2132021)
 importlib.reload(quizGenerator)
 
-QDAT={'AAC':{'date':'2021xxxx','datestr':'x/x/2021',
-             'prefix':r'quizzes/2021/AAC/AAC',
-             'A':{'past':[('Romans',[1,2,3,4,5,6,7],)],
-                  'current':[('Romans',[8,9,10])]},
-             'B':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]}},
+QDAT={'AAC':{'date':'2022xxxx','datestr':'x/x/2022',
+             'prefix':r'quizzes/2022/AAC/AAC',
+             #'A':{'past':[('Acts',[1,],)],
+             #     'current':[('Acts',[1,])]},
+             #'B':{'past':[('Acts',[1,],)],
+             #     'current':[('Acts',[1,])]}
+             # LIST OF INTERVALS
+             'A':{'past':[(('Acts',1,1),('Acts',1,19))],
+                  'current':[(('Acts',1,1),('Acts',1,19))]},
+             'B':{'past':[(('Acts',1,1),('Acts',1,19))],
+                  'current':[(('Acts',1,1),('Acts',1,19))]}
+             
+             },
       
-      'Marshfield':{'date':'20211204','datestr':'12/4/2021',
-             'prefix':r'quizzes/2021/Marshfield/Marshfield',
-             'A':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]},
-             'B':{'past':[('Romans',[1,],)],
-                  'current':[('Romans',[1,])]}},
+    #   'Marshfield':{'date':'20211204','datestr':'12/4/2021',
+    #          'prefix':r'quizzes/2021/Marshfield/Marshfield',
+    #          'A':{'past':[('Romans',[1,],)],
+    #               'current':[('Romans',[1,])]},
+    #          'B':{'past':[('Romans',[1,],)],
+    #               'current':[('Romans',[1,])]}},
       
-      'NCD':{'date':'202201xx','datestr':'1/x/2022',
-             'prefix':r'quizzes/2022/NCD/NCD',
-             'A':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
-                  'current':[('Romans',[11,12,13,])]},
-             'B':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
-                  'current':[('Romans',[11,12,13,])]}},
+    #   'NCD':{'date':'202201xx','datestr':'1/x/2022',
+    #          'prefix':r'quizzes/2022/NCD/NCD',
+    #          'A':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
+    #               'current':[('Romans',[11,12,13,])]},
+    #          'B':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
+    #               'current':[('Romans',[11,12,13,])]}},
       
-      'WGL':{'date':'20220212','datestr':'2/12/2022',
-             'prefix':r'quizzes/2022/WGL/WGL',
-             'A':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
-                  'current':[('Romans',[11,12,13,14])]},
-             'B':{'past':[('Romans',[11,12],)],
-                  'current':[('Romans',[13,14])]}},
-      'Virtual':{'date':'2021xxxx','datestr':'x/x/2021',
-             'prefix':r'quizzes/2021/Virtual/Virtual',
-             'A':{'past':[('James',[5,],)],
-                  'current':[('James',[5,])]},
-             'B':{'past':[('James',[5,],)],
-                  'current':[('James',[5,])]}},
+    #   'WGL':{'date':'20220212','datestr':'2/12/2022',
+    #          'prefix':r'quizzes/2022/WGL/WGL',
+    #          'A':{'past':[('Romans',[1,2,3,4,5,6,7,8,9,10],)],
+    #               'current':[('Romans',[11,12,13,14])]},
+    #          'B':{'past':[('Romans',[11,12],)],
+    #               'current':[('Romans',[13,14])]}},
+    #   'Virtual':{'date':'2021xxxx','datestr':'x/x/2021',
+    #          'prefix':r'quizzes/2021/Virtual/Virtual',
+    #          'A':{'past':[('James',[5,],)],
+    #               'current':[('James',[5,])]},
+    #          'B':{'past':[('James',[5,],)],
+    #               'current':[('James',[5,])]}},
       }
 
 #fnxls=r'2020_Matthew/MatthewDistrict_2020.xls'
 #fnxls=r'2020_Matthew/MatthewDistrict_20201203.xls'
-fnxls=r'2021_RomansJames/RomansJames.xls'
+#fnxls=r'2021_RomansJames/RomansJames.xls'
+fnxlsx=r'2022_Acts/acts_db.xlsx'
 #pnaac=r'quizzes/2020/AAC/AAC'
 #pnmarsh=r'quizzes/2020/Marshfield/EA'
 #pnncd=r'quizzes/2020/NCD/NCD'
@@ -66,10 +75,78 @@ msg=[{'type':'p',
     {'type':'p',
       'text':'Please let Ted Tower know of any problems you discover.'},]
 
+# %% AAC A practice quizzes
+importlib.reload(quizGenerator)
+
+QG=quizGenerator.QuizGenerator(fndatabase=fnxlsx,quizType='gospel')
+
+# partial content
+past=QDAT['AAC']['A']['past']
+current=QDAT['AAC']['A']['current']
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
+            }
+
+# add custom limits for certain question types
+QG.quizDistribution['q']['limit']=(150,300)
+QG.quizDistribution['ft']['limit']=(150,300)
+for k in QG.quizDistribution.keys():
+    QG.quizDistribution[k]['set']=('Local',)
+    
+qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
+
+# write quizzes
+#QW=quizGenerator.QuizWriter()
+QW=quizWriter.QuizWriter()
+fn='%s_A_practice_%s.docx'%(QDAT['AAC']['prefix'],QDAT['AAC']['date'])
+ttl='AAC A Practice Quizzes - %s'%QDAT['AAC']['datestr']
+QW.save(fn,qdat,title=ttl,msg=msg)
+1/0
+
+# %%
+bk='Acts'
+vs='1:1-3:15,4:6-10:10'
+#vs='1:1-3:15'
+ivs=vs.split(',')
+c=[]
+for iv in ivs:
+    cv1,cv2=iv.split('-')
+    c1,v1=cv1.split(':')
+    c2,v2=cv2.split(':')
+    ci=((bk,c1,v1),(bk,c2,v2))
+    c.append(ci)
+    
+
+
+
+# %% AAC B practice quizzes
+QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
+
+# partial content
+past=QDAT['AAC']['B']['past']
+current=QDAT['AAC']['B']['current']
+QG.quizMakeup={'past':{'frac':0.5,'content':past},
+            'current':{'frac':0.5, 'content':current}
+            }
+
+# add custom limits for certain question types
+QG.quizDistribution['q']['limit']=(150,)
+QG.quizDistribution['ft']['limit']=(150,)
+for k in QG.quizDistribution.keys():
+    QG.quizDistribution[k]['set']=('Local',)
+    
+qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
+
+# write quizzes
+QW=quizGenerator.QuizWriter()
+fn='%s_B_practice_%s.docx'%(QDAT['AAC']['prefix'],QDAT['AAC']['date'])
+ttl='AAC B Practice Quizzes - %s'%QDAT['AAC']['datestr']
+QW.save(fn,qdat,title=ttl,msg=msg)
+
 # %% Internationals practice
 np.random.seed(20210151)
 district='WGL'
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
+QG=quizGenerator.QuizGenerator(fndatabase=fnxlsx,quizType='epistle')
 
 # partial content
 past=QDAT[district]['A']['past']
@@ -147,56 +224,7 @@ fn='%s_B_meet_%s.docx'%(QDAT[district]['prefix'],QDAT[district]['date'])
 ttl='%s B Meet Quizzes - %s'%(district,QDAT[district]['datestr'])
 QW.save(fn,qdat,title=ttl,msg=msg)
     
-# %% AAC A practice quizzes
-importlib.reload(quizGenerator)
 
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
-
-# partial content
-past=QDAT['AAC']['A']['past']
-current=QDAT['AAC']['A']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':past},
-            'current':{'frac':0.5, 'content':current}
-            }
-
-# add custom limits for certain question types
-QG.quizDistribution['q']['limit']=(150,300)
-QG.quizDistribution['ft']['limit']=(150,300)
-for k in QG.quizDistribution.keys():
-    QG.quizDistribution[k]['set']=('Local',)
-    
-qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
-
-# write quizzes
-QW=quizGenerator.QuizWriter()
-fn='%s_A_practice_%s.docx'%(QDAT['AAC']['prefix'],QDAT['AAC']['date'])
-ttl='AAC A Practice Quizzes - %s'%QDAT['AAC']['datestr']
-QW.save(fn,qdat,title=ttl,msg=msg)
-
-
-# %% AAC B practice quizzes
-QG=quizGenerator.QuizGenerator(fndatabase=fnxls,quizType='epistle')
-
-# partial content
-past=QDAT['AAC']['B']['past']
-current=QDAT['AAC']['B']['current']
-QG.quizMakeup={'past':{'frac':0.5,'content':past},
-            'current':{'frac':0.5, 'content':current}
-            }
-
-# add custom limits for certain question types
-QG.quizDistribution['q']['limit']=(150,)
-QG.quizDistribution['ft']['limit']=(150,)
-for k in QG.quizDistribution.keys():
-    QG.quizDistribution[k]['set']=('Local',)
-    
-qdat=QG.generateQuizTables(nquiz=4,xtra=10)   
-
-# write quizzes
-QW=quizGenerator.QuizWriter()
-fn='%s_B_practice_%s.docx'%(QDAT['AAC']['prefix'],QDAT['AAC']['date'])
-ttl='AAC B Practice Quizzes - %s'%QDAT['AAC']['datestr']
-QW.save(fn,qdat,title=ttl,msg=msg)
 
 # %% Virtual A practice quizzes
 importlib.reload(quizGenerator)
