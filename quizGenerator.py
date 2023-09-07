@@ -246,6 +246,7 @@ class QuizGenerator():
         to restrict those questions.
         """
         df=self.database
+        logger.info('database: %d questions'%len(df))
         
         dfq=df.copy();
         dfq['bcvf']=df['CH']+df['VS']/1000
@@ -282,6 +283,7 @@ class QuizGenerator():
                         # all other kinds of questions
                         f=df1[df1['TYPE'].str.lower().isin(dv['types'])]
                     nrows1=f.shape[0]
+                    logger.info('period %s: found %d %s questions'%(period,nrows1,k))
                     
                     # limit or set
                     if('limit' in dv):
@@ -290,6 +292,8 @@ class QuizGenerator():
                     if('set' in dv):
                         f=f[f['SET'].isin(dv['set'])]
                     nrows2=f.shape[0]
+                    logger.info('... %d left after club,set'%nrows2)
+                    
                     if(nrows2==0):
                         #raise Exception('Ack!  %d/%d %s questions in %s content.'%(nrows2,nrows1,k,period))
                         msg='Warning: "%s" has %d %s question(s); %d pass limits.  ' \
@@ -745,8 +749,11 @@ class QuizGenerator():
         #
         #dfq=dfq.sort_values(by=['CH','VS'])
         idxRepeat=dfq[dfq['FLAGS'].str.contains('R')].index
+        #if(len(idxRepeat)):
+        #    print('wait!')
         for ii,(period,dfremaining) in enumerate(C.items()):
-            C[period].loc[idxRepeat,'FLAGS']='R'
+            ir=idxRepeat[idxRepeat.isin(C[period].index)]
+            C[period].loc[ir,'FLAGS']='R'
         
         stats={#'min':self._countTypes(Q1),
                'min':countTypes(Q1,self.quizDistribution),
