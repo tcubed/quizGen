@@ -4,10 +4,11 @@ Created on Mon Aug 22 20:40:35 2022
 
 @author: Ted
 """
+import os
 import pandas as pd
-import xlrd
+from bs4 import BeautifulSoup
 
-def loadDatabase(fnxls):
+def parseCBQZquestions_old(fnxls):
     """Load the question database
 
     Args:
@@ -47,13 +48,14 @@ def loadDatabase(fnxls):
 
     L=[]
     for row_idx in range(1,sht.nrows):
-        #if(row_idx>20): break
+        if(row_idx>20): break
 
         # get non-question fields
         row={}
         for ii in range(sht.ncols):
             txt = sht.cell_value(row_idx, ii)
             if(isinstance(txt,str)):
+                # remove non-breaking spaces
                 txt=txt.replace(u'\xa0', u' ')
             row[hdr[ii]]=txt
 
@@ -143,8 +145,126 @@ def loadDatabase(fnxls):
     #print(self.quizMakeup)
     return content,df
     
+
+    
+# %%
+
+
+def parseCbqzQuestions(fnlocal,return_span=False):
+    # Read the HTML file
+    with open(fnlocal, "r", encoding="utf-8") as file:
+        html_content = file.read()
+    
+    # Parse the HTML content using BeautifulSoup
+    soup = BeautifulSoup(html_content, "html.parser")
+    
+    # Find the table in the HTML (you may need to adjust this based on your HTML structure)
+    table = soup.find("table")
+    
+    # Extract table data into a list of lists
+    data = []
+    hdr=[]
+    # question and answer metadata
+    xq=[]
+    xa=[]
+    for jj,row in enumerate(table.find_all("tr")):
+        row_data = []
+        for ii,cell in enumerate(row.find_all(["th", "td"])):
+            #print(cell)
+            if(jj==0):
+                hdr.append(cell.get_text().upper())
+                continue
+            if(hdr[ii] in ['QUESTION','ANSWER']):
+                
+                # process the spans
+                spans = cell.find_all("span")
+                
+                sdk={}
+                for span in spans:
+                    key=span.get_text(strip=True)
+                    if(key not in sdk):
+                        sdk[key]=[]
+                    for c in span.attrs['class']:
+                        if(c not in sdk[key]):
+                            sdk[key].append(c)
+                if(hdr[ii]=='QUESTION'):
+                    xq.append(sdk)
+                else:
+                    xa.append(sdk)
+                if(return_span):
+                    txt=cell
+                else:
+                    txt=cell.get_text()
+            else:
+                txt=cell.get_text()
+                
+            row_data.append(txt)
+        if(jj==0):
+            continue
+        data.append(row_data)
+    
+    # Convert the list of lists into a Pandas DataFrame
+    df = pd.DataFrame(data, columns=hdr)
+    df=df[['BOOK','CHAPTER','VERSE','TYPE','QUESTION','ANSWER']]
+    df['CHAPTER']=df['CHAPTER'].astype(int)
+    df['VERSE']=df['VERSE'].astype(int)
+    
+    # append question and answer metadata
+    df['XQ']=xq
+    df['XA']=xa
+    
+    # if(fnkeyverses!=''):
+    #     dfkv=loadKeyVerses(fnkeyverses)
+    #     df=df.merge(dfkv,on=["BOOK","CHAPTER","VERSE"],how="left")
+    #     df.fillna('',inplace=True)
+    
+    return df
+
+def loadKeyVerses(fnkeyverses):
+    df=pd.read_excel(fnkeyverses,dtype={'Chapter':int,'Verse': int,'Club':str})
+    #.rename({'Book':'BOOK','Chapter':'CHAPTER','Verse':'VERSE','Set':'SET'},inplace=True)
+    
+    df.columns = [col.upper() for col in df.columns]
+    return df
+    
+# Step 6: Display the DataFrame
+#print(df)
+
+# %%
 if(__name__=='__main__'):
-    fnxls=r'2022_Acts/Acts_20220822b.xls'
-    content,df=loadDatabase(fnxls)
-    df.to_excel('acts_db.xlsx',index=False)
-    df.to_json('acts_db.json',orient='records')
+    #fnxls=r'2022_Acts/Acts_20220822b.xls'
+    #content,df=loadDatabase(fnxls)
+    #df.to_excel('acts_db.xlsx',index=False)
+    #df.to_json('acts_db.json',orient='records')
+    
+    #df=pd.read_excel(r'2022_Acts/acts_db.xlsx')
+    
+    #df.to_json('acts_db.json',orient='records')
+    
+    fnlocal=r'2023_GEPC\GEPC Local_reg.xls'
+    fnkeyverses=r'2023_GEPC\GEPC2023-Key Verses.xlsx'
+    #fndistrict=r'2023_GEPC\2023-24 GEPC District Set.xls'
+    
+    
+    df=parseCbqzQuestions(fnlocal)
+    
+    
+    dfkv=loadKeyVerses(fnkeyverses)
+    df=df.merge(dfkv,on=["BOOK","CHAPTER","VERSE"],how="left")
+    df.fillna('',inplace=True)
+    
+    #dfs=pd.read_html(fnlocal,flavor='bs4')
+    #df=dfs[0]
+
+    #print("load key verses")
+    #
+    #dfkv=loadKeyVerses(fnkeyverses)
+    
+    #dfkv=pd.read_excel(fnkeyverses,dtype={'Chapter':int,'Verse': int,'Set':int})
+    
+    # for jumpjock
+    dfjj=df.drop(columns=['XQ','XA'])
+    dfjj.rename(columns={'BOOK':'BK','CHAPTER':'CH','VERSE':'VS'},inplace=True)
+    dfjj['INDEX']=range(1,len(dfjj)+1)
+    dfjj['SET']='Local'
+    dfjj.to_json('gepc2023_db.json',orient='records')
