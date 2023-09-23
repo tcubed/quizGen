@@ -117,33 +117,51 @@ def countTypes(df,quizDistribution):
         tcount[qt]=nrow
     return tcount
 
+# DIST_EPISTLE={'int':{'range':(9,16),'types':('int',),'label':'Interrogative'},
+#     'cr':{'range':(3,7),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
+#     'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
+#     'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
+#     'q':{'range':(3,4),'types':('q','q2'),'label':'Quote'}}
+# 2023+
+DIST_EPISTLE={'int':{'range':(7,14),'types':('int',),'label':'Interrogative'},
+    'cr':{'range':(3,5),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
+    'ft':{'range':(3,5),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
+    'ma':{'range':(2,4),'types':('ma',),'label':'Multiple Answer'},
+    'q':{'range':(2,3),'types':('q','q2'),'label':'Quote'}}
+
+# DIST_GOSPEL={'int':{'range':(8,14),'types':('int',),'label':'Interrogative'},
+#     'cr':{'range':(3,6),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
+#     'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
+#     'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
+#     'q':{'range':(2,3),'types':('q','q2'),'label':'Quote'},
+#     'sit':{'range':(2,4),'types':('sit',),'label':'Situational'},}
+DIST_GOSPEL={'int':{'range':(7,14),'types':('int',),'label':'Interrogative'},
+    'cr':{'range':(3,5),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
+    'ft':{'range':(3,5),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
+    'ma':{'range':(2,4),'types':('ma',),'label':'Multiple Answer'},
+    'q':{'range':(2,3),'types':('q','q2'),'label':'Quote'},
+    'sit':{'range':(2,4),'types':('sit',),'label':'Situational'},}
 
 class QuizGenerator():
-    def __init__(self,fndatabase,quizType='epistle',quizDistribution=None):
+    def __init__(self,
+                 #fndatabase,
+                 quizType='epistle',
+                 quizDistribution=None):
         #print('QuizGenerator initialized.')
-        assert os.path.exists(fndatabase),"can't find database: %s"%fndatabase
+        #assert os.path.exists(fndatabase),"can't find database: %s"%fndatabase
 
-        self.quizType=quizType
+        self.quizType=quizType.lower()
         self.nquiz=1
         #self.quizMakeup={'current':{'frac':0.5,'content':[('HEB',[6,7,8,9,10],[150,300])]},
         #                'past':{'frac':0.5,'content':[('HEB',[1,2,3,4,5],[150,300])]}
         #    }
-        if(quizType.lower()=='epistle'):
+        if(self.quizType=='epistle'):
             # epistle
-            qdist={'int':{'range':(9,16),'types':('int',),'label':'Interrogative'},
-                'cr':{'range':(3,7),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
-                'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
-                'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
-                'q':{'range':(3,4),'types':('q','q2'),'label':'Quote'}}
-        elif(quizType.lower()=='gospel'):
+            qdist=DIST_EPISTLE
+        elif(self.quizType=='gospel'):
             # gospel
-            qdist={'int':{'range':(8,14),'types':('int',),'label':'Interrogative'},
-                'cr':{'range':(3,6),'types':('cr','cvr','cvrma','crma'),'label':'Chapter Reference'},
-                'ft':{'range':(3,4),'types':('ft','f2v','ftv','ftn'),'label':'Finish-The-Verse'},
-                'ma':{'range':(1,2),'types':('ma',),'label':'Multiple Answer'},
-                'q':{'range':(2,3),'types':('q','q2'),'label':'Quote'},
-                'sit':{'range':(2,4),'types':('sit',),'label':'Situational'},}
-        elif (quizType.lower()=='custom'):
+            qdist=DIST_GOSPEL
+        elif (self.quizType=='custom'):
             qdist=None
         else:
             raise Exception('quizType is epistle/gospel/custom, not "%s"'%quizType)
@@ -176,19 +194,19 @@ class QuizGenerator():
         
         # load database
         #self.loadDatabase(fndatabase)
-        df=pd.read_excel(fndatabase);
-        df=df.rename(columns={'BOOK':'BK'})
-        df[np.isnan(df['CLUB'])==False]['CLUB'].astype(int)
-        #df['FLAGS']=''
-        df.fillna('', inplace=True)
-        self.database=df
+        # df=pd.read_excel(fndatabase);
+        # df=df.rename(columns={'BOOK':'BK'})
+        # df[np.isnan(df['CLUB'])==False]['CLUB'].astype(int)
+        # #df['FLAGS']=''
+        # df.fillna('', inplace=True)
+        # self.database=df
         
         # default -- all content
         content=[]
-        ubk=df['BK'].unique()
-        for bk in ubk:
-            uch=df[df['BK']==bk]['CH'].unique()
-            content.append((bk,list(uch)))
+        # ubk=df['BK'].unique()
+        # for bk in ubk:
+        #     uch=df[df['BK']==bk]['CH'].unique()
+        #     content.append((bk,list(uch)))
         self.quizMakeup={'current':{'frac':1,'content':content}}
         #print('default quizMakeup')
         #print(self.quizMakeup)
@@ -198,6 +216,31 @@ class QuizGenerator():
     #    self.quizType=quizType
     #    self.data['type']=quizType
     
+    def loadDatabase(self,fndatabase):
+        assert os.path.exists(fndatabase),"can't find database: %s"%fndatabase
+        # fix dataframe
+        def convert_to_str(value):
+            if pd.isna(value) or value == '':
+                return ''
+            else:
+                return str(int(value))
+            
+        df=pd.read_excel(fndatabase);
+        if('FLAGS' not in df):
+            df['FLAGS']=''
+        df['FLAGS'].fillna('',inplace=True)
+        df['CLUB'] = df['CLUB'].apply(convert_to_str)
+        df['INDEX']=range(1, len(df) + 1)
+        
+        df=df.rename(columns={'BOOK':'BK',
+                              'CHAPTER':'CH',
+                              'VERSE':'VS'})
+        #df[np.isnan(df['CLUB'])==False]['CLUB'].astype(int)
+        #df['FLAGS']=''
+        #df.fillna('', inplace=True)
+        df['BCV']=df['BK']+'_'+df['CH'].astype(str)+'_'+df['VS'].astype(str)
+        self.database=df
+        
     def getQuizData(self):
         
         return {'type':self.quizType,
@@ -251,6 +294,8 @@ class QuizGenerator():
         dfq=df.copy();
         dfq['bcvf']=df['CH']+df['VS']/1000
         
+        logger.info('quizMakeup:'+str(self.quizMakeup))
+        
         Q={}
         for period,v in self.quizMakeup.items():
             frames=[]
@@ -288,6 +333,7 @@ class QuizGenerator():
                     # limit or set
                     if('limit' in dv):
                         #f=f[f['GROUP'].isin(dv['limit'])]
+                        assert isinstance(dv['limit'][0],str),"limits should be strings (e.g. '150')"
                         f=f[f['CLUB'].isin(dv['limit'])]
                     if('set' in dv):
                         f=f[f['SET'].isin(dv['set'])]
@@ -487,7 +533,11 @@ class QuizGenerator():
         
         
         q['used']=1
-        if(repeat): q['FLAGS']+='R'
+        if(repeat):
+            try:
+                q['FLAGS']+='R'
+            except:
+                print('acj?')
         row=q.iloc[0]
         logger.info('Picked %s from %s'%(qtpick,row['BCV']))
 
@@ -518,7 +568,7 @@ class QuizGenerator():
                 raise Exception(msg)
             nq_old=len(Q1)
             
-            logger.info('current num questions: %d'%nq_old)
+            logger.info('current num questions: %d (remaining: %d)'%(nq_old,len(dfremaining)))
             #usedVerses=[]
             Q1,dfremaining=self.pickQuestion(Q1,dfremaining,
                                              otherBCV=usedVerses,
@@ -824,6 +874,7 @@ class QuizGenerator():
         self.quizStats=QQstats
         self.extraQuestions=qxtra
         
+        logger.info('done generating quizzes, stats, extra questions!')
         return self.getQuizData()
 
 

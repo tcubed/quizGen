@@ -238,8 +238,10 @@ class QuizWriter():
                 #
                 c=row_cells[2]
                 q='Q: %s'%row.QUESTION
-                keywords=row.QKEYWORDS.split(',')
-
+                if('QKEYWORDS' in row):
+                    keywords=row.QKEYWORDS.split(',')
+                else:
+                    keywords=[]
                 self.boldText(cell=c, text=q, keywords=keywords)
                 c.add_paragraph()
 
@@ -247,18 +249,25 @@ class QuizWriter():
                 # ANSWER
                 #
                 a='A: %s'%row.ANSWER
-                keywords=row.AKEYWORDS.split(',')
+                if('AKEYWORDS' in row):
+                    keywords=row.AKEYWORDS.split(',')
+                else:
+                    keywords=[]
                 self.boldText(cell=c, text=a, keywords=keywords)
 
                 # book, chapter, verse, and club (e.g. 150,300)
                 txt='%s %s:%s'%(row.BK,row.CH,row.VS)
-                if(isinstance(row.VE,float)):
-                    txt+='-%s'%str(int(row.VE))
+                # if('VE' in row):
+                #     if(isinstance(row.VE,float)):
+                #         txt+='-%s'%str(int(row.VE))
+                if('2' in row.TYPE):
+                    txt+='-%s'%str(int(row.VS)+1)
                 
                 txt+='\n('
-                if(isinstance(row.CLUB,float)):
+                #if(isinstance(row.CLUB,float)):
+                if(len(row.CLUB)):
                     #txt+='\n(%d)'%row.CLUB
-                    txt+='%d,'%row.CLUB
+                    txt+='%s,'%row.CLUB
                 if(row.SET is not None):
                     txt+='%s'%row.SET
                 txt+=')'
@@ -353,7 +362,10 @@ class QuizWriter():
                     #
                     c=row_cells[2]
                     q='Q: %s'%row.QUESTION
-                    keywords=row.QKEYWORDS.split(',')
+                    if('QKEYWORDS' in row):
+                        keywords=row.QKEYWORDS.split(',')
+                    else:
+                        keywords=[]
                     self.boldText(cell=c, text=q, keywords=keywords)
 
                     c.add_paragraph()
@@ -363,18 +375,27 @@ class QuizWriter():
                     # ANSWER
                     #
                     a='A: %s'%row.ANSWER
-                    keywords=row.AKEYWORDS.split(',')
+                    if('AKEYWORDS' in row):
+                        keywords=row.AKEYWORDS.split(',')
+                    else:
+                        keywords=[]
                     self.boldText(cell=c, text=a, keywords=keywords)
 
                     #
                     # VERSES
                     #
                     txt='%s %s:%s'%(row.BK,row.CH,row.VS)
-                    if(isinstance(row.VE,float)):
-                        txt+='-%s'%str(int(row.VE))
-                    if(isinstance(row.CLUB,float)):
-                        txt+='\n(%d)'%row.CLUB
-
+                    #if('VE' in row):
+                    #    if(isinstance(row.VE,float)):
+                    #        txt+='-%s'%str(int(row.VE))
+                    if('2' in row.TYPE):
+                        txt+='-%s'%str(int(row.VS)+1)
+                    
+                    #if(isinstance(row.CLUB,float)):
+                    #    txt+='\n(%d)'%row.CLUB
+                    if(len(row.CLUB)):
+                        txt+='\n(%s)'%row.CLUB
+                    
                     #if(not np.isnan(row.VE)):
                     #    txt+='-%s'%row.VE
                     #row_cells[3].text = txt
