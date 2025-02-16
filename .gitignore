@@ -1,11 +1,29 @@
-
 # file types to ignore
 *.docx
 *.xls*
 *.pdf
 *.log
-*ipynb_checkpoints
-*.pyc
 
-# directories to ignore
-_old/
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environment folders
+venv/
+
+# Ignore installation-related files and directories
+*.egg-info/
+*.dist-info/
+build/
+dist/
+
+# Ignore other IDE/editor folders
+.vscode/
+.idea/
+*.swp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Jupyter Notebook metadata (such as output or execution state)
+*.nbconvert/
