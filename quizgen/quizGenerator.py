@@ -70,17 +70,17 @@ Ted Tower, 2/2020
 import os
 import pandas as pd
 import numpy as np
-from IPython.display import display
-import xlrd
-import re
+#from IPython.display import display
+#import xlrd
+#import re
 import pprint
 
 # imports from python-docx to create the Word document
-from docx import Document
-from docx.shared import Inches, Pt
-from docx.oxml.ns import nsdecls
-from docx.oxml import parse_xml
-from docx.enum.text import WD_LINE_SPACING
+#from docx import Document
+#from docx.shared import Inches, Pt
+#from docx.oxml.ns import nsdecls
+#from docx.oxml import parse_xml
+#from docx.enum.text import WD_LINE_SPACING
 
 import logging
 #logging.basicConfig(filename='quiz_generator.log',level=logging.DEBUG)
